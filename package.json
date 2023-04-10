@@ -1,0 +1,41 @@
+{
+	"name": "nodejs_banking_api_project",
+	"version": "1.0.0",
+	"description": "API in NodeJS for the management of a bank",
+	"main": "/src/script.ts",
+	"scripts": {
+		"test": "echo \"i'm testing commande\"",
+		"dev": "nodemon --watch src --exec \"npm run compile-and-run\"",
+		"compile": "tsc",
+		"compile-and-run": "npm run compile && node dist/script.js",
+		"start": "nodemon --exec ts-node src/index.ts"
+	},
+	"keywords": [
+		"nodejs",
+		"api",
+		"prisma",
+		"orm",
+		"express",
+		"sqlite"
+	],
+	"author": "moisesoro@arolitec.com",
+	"license": "GPL-3.0-or-later",
+	"dependencies": {
+		"@prisma/client": "^4.12.0",
+		"@types/body-parser": "^1.19.2",
+		"@types/chai": "^4.3.4",
+		"@types/express": "^4.17.17",
+		"@types/sqlite3": "^3.1.8",
+		"body-parser": "^1.20.2",
+		"chai": "^4.3.7",
+		"dotenv": "^16.0.3",
+		"express": "^4.18.2",
+		"prisma": "^4.12.0",
+		"sqlite3": "^5.1.6"
+	},
+	"devDependencies": {
+		"@types/jest": "^29.5.0",
+		"nodemon": "^2.0.22",
+		"ts-node": "^10.9.1"
+	}
+}
