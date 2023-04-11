@@ -47,17 +47,21 @@ export const userCreate = async (req: Request, res: Response) => {
 }
 
 export const login = async (req: Request, res: Response) => {
-	const { email, password } = req.body
-	const user = await prisma.user.findUnique({ where: { email } })
-	if (!user) {
-		return res.status(400).json({ message: "email or passwor is not correct" });
-	}
-	const isMatch = bcrypt.compareSync(password, user.password);
-	const token = generateToken({ id: user.id, name: user.name })
-	if (isMatch) {
-		return res.status(200).json({ token });
-	} else {
-		return res.status(400).json({ message: "email or passwor is not correct" });
+	try {
+		const { email, password } = req.body
+		const user = await prisma.user.findUnique({ where: { email } })
+		if (!user) {
+			return res.status(400).json({ message: "email or passwor is not correct" });
+		}
+		const isMatch = bcrypt.compareSync(password, user.password);
+		const token = generateToken({ id: user.id, name: user.name })
+		if (isMatch) {
+			return res.status(200).json({ token });
+		} else {
+			return res.status(400).json({ message: "email or passwor is not correct" });
+		}
+	} catch (error) {
+		return res.status(500).json({ message: "server was crashed", error })
 	}
 }
 
