@@ -5,3 +5,6 @@ dist/
 .env
 package-lock.json
 *.js
+
+*.vscode
+*.sql

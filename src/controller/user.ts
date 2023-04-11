@@ -1,24 +1,73 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { availableKeys, generateToken, isValidEmail, isValideName, isValidePassword } from "../common/user";
+import * as bcrypt from 'bcryptjs'
+
 
 const prisma = new PrismaClient()
 
-export const adminCreate = async (req: Request, res: Response) => {
-	const body = req.body;
+
+export const userCreate = async (req: Request, res: Response) => {
+	const { name, email, password } = req.body;
+
+	const fieldsAreFilled = availableKeys.every(el => Object.keys(req.body).includes(el))
+	if (!fieldsAreFilled) {
+		return res.status(400).json({ message: "user datas are not correcte", correctFields: availableKeys })
+	}
+	if (!isValideName(name)) {
+		return res.status(400).json({ message: "name length must be longer than 2 characters" })
+	}
+	if (!isValidEmail(email)) {
+		return res.status(400).json({ message: "email format is not correct" })
+	}
+	if (!isValidePassword(password)) {
+		return res.status(400).json({ message: "password is not correct, it must be longer than 7 caracter" })
+	}
 	try {
-		const newUser = await prisma.user.create({
+		const passwordHashed = await bcrypt.hash(password, 10)
+		const user = await prisma.user.create({
 			data: {
-				name: body.name,
-				email: body.email,
-				password: body.password
+				name: name,
+				email: email,
+				password: passwordHashed
 			}
 		})
-		console.log(newUser);
-
-		return res.status(200).json({ newUser });
+		const token = generateToken({ id: user.id, name: user.name })
+		return res.status(200).json({ token });
 	} catch (error) {
-		console.log("l'erreur est ; ", error);
-		return res.status(500).json({ message: "errrue serveur" })
+		if (error instanceof PrismaClientKnownRequestError) {
+			if (error.code === 'P2002') {
+				return res.status(400).json({ message: `User with this email is already exist` })
+			}
+		}
+		return res.status(500).json({ message: "server was " })
 
 	}
+}
+
+export const login = async (req: Request, res: Response) => {
+	const { email, password } = req.body
+	const user = await prisma.user.findUnique({ where: { email } })
+	if (!user) {
+		return res.status(400).json({ message: "email or passwor is not correct" });
+	}
+	const isMatch = bcrypt.compareSync(password, user.password);
+	const token = generateToken({ id: user.id, name: user.name })
+	if (isMatch) {
+		return res.status(200).json({ token });
+	} else {
+		return res.status(400).json({ message: "email or passwor is not correct" });
+	}
+}
+
+export const userList = async (req: Request, res: Response) => {
+	const take = Number(req.query.limit) || undefined;
+	const skip = Number(req.query.page) || undefined;
+
+	const users = await prisma.user.findMany({ select: { name: true, email: true }, take, skip })
+
+	return res.status(200).json({
+		users
+	})
 }
