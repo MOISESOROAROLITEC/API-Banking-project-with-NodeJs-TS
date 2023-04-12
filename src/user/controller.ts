@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { availableKeys, generateToken, isValidEmail, isValideName, isValidePassword } from "../common/validator";
 import * as bcrypt from 'bcryptjs'
-import { createAccouteValidator } from "./validator";
+import { createUserValidator, loginValidator } from "./validator";
 
 
 const prisma = new PrismaClient()
@@ -16,7 +16,7 @@ export const userCreate = async (req: Request, res: Response) => {
 		return res.status(400).json({ message: "user datas are not correcte", correctFields: availableKeys })
 	}
 
-	const result = createAccouteValidator.validate({ name, email, password }).error?.details[0].message
+	const result = createUserValidator.validate({ name, email, password }).error?.details[0].message
 	if (result) {
 		return res.status(400).json({ message: result })
 	}
@@ -45,6 +45,10 @@ export const userCreate = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
 	try {
 		const { email, password } = req.body
+		const result = loginValidator.validate({ email, password }).error?.details[0].message
+		if (result) {
+			return res.status(400).json({ message: result })
+		}
 		const user = await prisma.user.findUnique({ where: { email } })
 		if (!user) {
 			return res.status(400).json({ message: "email or passwor is not correct" });
