@@ -22,19 +22,19 @@ model Account {
   balance     Float
   currency    String
   bic         String
-  type        String        @default("user")
+  type        String        @default("epargne")
   createAt    DateTime      @default(now())
-  updateAt    DateTime      @default(now())
-  deleteAt    DateTime
+  updateAt    DateTime      @updatedAt
   transaction Transaction[]
 }
 
 model Transaction {
-  id             Int      @id @default(autoincrement())
-  amount         Float
-  counterPartyId String
-  type           String
-  date           DateTime @default(now())
-  Account        Account? @relation(fields: [accountIban], references: [iban])
-  accountIban    String?
+  id                 Int      @id @default(autoincrement())
+  amount             Float
+  type               String
+  counterPartyId     String
+  createAt           DateTime @default(now())
+  updateAt           DateTime @updatedAt
+  AccountEmmiter     Account? @relation(fields: [accountIbanEmmiter], references: [iban])
+  accountIbanEmmiter String?
 }
