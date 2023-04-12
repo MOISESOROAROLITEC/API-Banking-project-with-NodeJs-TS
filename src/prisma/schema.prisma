@@ -13,3 +13,28 @@ model User {
   email    String @unique
   password String
 }
+
+model Account {
+  iban        String        @id @unique
+  name        String
+  number      String        @unique
+  email       String        @unique
+  balance     Float
+  currency    String
+  bic         String
+  type        String        @default("user")
+  createAt    DateTime      @default(now())
+  updateAt    DateTime      @default(now())
+  deleteAt    DateTime
+  transaction Transaction[]
+}
+
+model Transaction {
+  id             Int      @id @default(autoincrement())
+  amount         Float
+  counterPartyId String
+  type           String
+  date           DateTime @default(now())
+  Account        Account? @relation(fields: [accountIban], references: [iban])
+  accountIban    String?
+}
