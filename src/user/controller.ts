@@ -11,9 +11,9 @@ const prisma = new PrismaClient()
 export const userCreate = async (req: Request, res: Response) => {
 	const { name, email, password } = req.body;
 
-	const result = createUserValidator.validate(req.body).error?.details[0].message
-	if (result) {
-		return res.status(400).json({ message: result })
+	const isValidate = createUserValidator.validate(req.body).error?.details[0].message
+	if (isValidate) {
+		return res.status(400).json({ message: isValidate })
 	}
 
 	try {
@@ -40,9 +40,9 @@ export const userCreate = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
 	try {
 		const { email, password } = req.body
-		const result = loginValidator.validate(req.body).error?.details[0].message
-		if (result) {
-			return res.status(400).json({ message: result })
+		const isValidate = loginValidator.validate(req.body).error?.details[0].message
+		if (isValidate) {
+			return res.status(400).json({ message: isValidate })
 		}
 		const user = await prisma.user.findUnique({ where: { email } })
 		if (!user) {
