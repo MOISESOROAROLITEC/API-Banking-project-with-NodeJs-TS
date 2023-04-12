@@ -20,7 +20,8 @@ export const createAccount = async (req: Request, res: Response) => {
 	} catch (error) {
 		if (error instanceof PrismaClientKnownRequestError) {
 			if (error.code === 'P2002') {
-				return res.status(400).json({ message: `Account with this ${error.meta?.target[0]} is already exist` })
+				const target: string[] = error.meta!['target'] as string[]
+				return res.status(400).json({ message: `Account with this ${target[0]} is already exist` })
 			}
 		}
 		return res.status(500).json({ message: "server was crashed", error })
