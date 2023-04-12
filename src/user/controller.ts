@@ -8,7 +8,6 @@ import { createAccouteValidator } from "./validator";
 
 const prisma = new PrismaClient()
 
-
 export const userCreate = async (req: Request, res: Response) => {
 	const { name, email, password } = req.body;
 
@@ -16,18 +15,8 @@ export const userCreate = async (req: Request, res: Response) => {
 	if (!fieldsAreFilled) {
 		return res.status(400).json({ message: "user datas are not correcte", correctFields: availableKeys })
 	}
-	// if (!isValideName(name)) {
-	// 	return res.status(400).json({ message: "name length must be longer than 2 characters" })
-	// }
-	// if (!isValidEmail(email)) {
-	// 	return res.status(400).json({ message: "email format is not correct" })
-	// }
-	// if (!isValidePassword(password)) {
-	// 	return res.status(400).json({ message: "password is not correct, it must be longer than 7 caracter" })
-	// }
-	const result = createAccouteValidator.validate({ name, email, password }).error?.details[0].message
-	console.log("le resultat de la validation est : ", result);
 
+	const result = createAccouteValidator.validate({ name, email, password }).error?.details[0].message
 	if (result) {
 		return res.status(400).json({ message: result })
 	}

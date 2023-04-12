@@ -1,4 +1,3 @@
-// import express, { Request, Response } from 'express';
 import express = require("express");
 import dotenv = require('dotenv');
 import userRoutes from './user/route';

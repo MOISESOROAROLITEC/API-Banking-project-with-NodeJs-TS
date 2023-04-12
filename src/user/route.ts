@@ -1,4 +1,3 @@
-// const express = require('express');
 const express = require('express')
 import { login, userCreate, userList } from './controller'
 
