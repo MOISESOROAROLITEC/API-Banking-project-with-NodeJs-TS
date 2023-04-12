@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { availableKeys, generateToken, isValidEmail, isValideName, isValidePassword } from "../common/user";
+import { availableKeys, generateToken, isValidEmail, isValideName, isValidePassword } from "../common/validator";
 import * as bcrypt from 'bcryptjs'
 
 

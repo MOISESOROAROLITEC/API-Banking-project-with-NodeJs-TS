@@ -1,8 +1,6 @@
 // const express = require('express');
 const express = require('express')
-import { body } from 'express-validator'
-// import express from 'express'
-import { login, userCreate, userList } from '../controller/user'
+import { login, userCreate, userList } from './controller'
 
 const userRoutes = express.Router()
 
