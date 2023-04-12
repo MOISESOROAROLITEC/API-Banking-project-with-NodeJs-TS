@@ -41,7 +41,28 @@ export const getOneAccount = async (req: Request, res: Response) => {
 		if (!account) {
 			return res.status(404).json({ message: "No account matches this IBAN" })
 		}
-		return res.status(201).json({ account })
+		return res.status(200).json({ account })
+	} catch (error) {
+		return res.status(500).json({ message: "server was crashed", error })
+	}
+}
+
+export const getAccounts = async (req: Request, res: Response) => {
+	const take = Number(req.query.limit) || undefined;
+	const skip = Number(req.query.page) || undefined;
+	try {
+		const accounts = await prisma.account.findMany({ take, skip });
+		if (!accounts) {
+			return res.status(200).json({ accounts })
+		}
+
+		const totalRecords: number = await prisma.account.count();
+		const totalPages: number = take ? Math.ceil(totalRecords / take) : 1;
+		const currentPage = skip ? skip : 1;
+
+		return res.status(200).json({
+			totalRecords, totalPages, currentPage, accounts
+		})
 	} catch (error) {
 		return res.status(500).json({ message: "server was crashed", error })
 	}
