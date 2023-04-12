@@ -11,12 +11,7 @@ const prisma = new PrismaClient()
 export const userCreate = async (req: Request, res: Response) => {
 	const { name, email, password } = req.body;
 
-	const fieldsAreFilled = availableKeys.every(el => Object.keys(req.body).includes(el))
-	if (!fieldsAreFilled) {
-		return res.status(400).json({ message: "user datas are not correcte", correctFields: availableKeys })
-	}
-
-	const result = createUserValidator.validate({ name, email, password }).error?.details[0].message
+	const result = createUserValidator.validate(req.body).error?.details[0].message
 	if (result) {
 		return res.status(400).json({ message: result })
 	}
@@ -45,7 +40,7 @@ export const userCreate = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
 	try {
 		const { email, password } = req.body
-		const result = loginValidator.validate({ email, password }).error?.details[0].message
+		const result = loginValidator.validate(req.body).error?.details[0].message
 		if (result) {
 			return res.status(400).json({ message: result })
 		}
