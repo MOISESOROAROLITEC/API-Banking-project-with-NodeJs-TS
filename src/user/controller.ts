@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { availableKeys, generateToken, isValidEmail, isValideName, isValidePassword } from "../common/validator";
 import * as bcrypt from 'bcryptjs'
+import { createAccouteValidator } from "./validator";
 
 
 const prisma = new PrismaClient()
@@ -15,15 +16,22 @@ export const userCreate = async (req: Request, res: Response) => {
 	if (!fieldsAreFilled) {
 		return res.status(400).json({ message: "user datas are not correcte", correctFields: availableKeys })
 	}
-	if (!isValideName(name)) {
-		return res.status(400).json({ message: "name length must be longer than 2 characters" })
+	// if (!isValideName(name)) {
+	// 	return res.status(400).json({ message: "name length must be longer than 2 characters" })
+	// }
+	// if (!isValidEmail(email)) {
+	// 	return res.status(400).json({ message: "email format is not correct" })
+	// }
+	// if (!isValidePassword(password)) {
+	// 	return res.status(400).json({ message: "password is not correct, it must be longer than 7 caracter" })
+	// }
+	const result = createAccouteValidator.validate({ name, email, password }).error?.details[0].message
+	console.log("le resultat de la validation est : ", result);
+
+	if (result) {
+		return res.status(400).json({ message: result })
 	}
-	if (!isValidEmail(email)) {
-		return res.status(400).json({ message: "email format is not correct" })
-	}
-	if (!isValidePassword(password)) {
-		return res.status(400).json({ message: "password is not correct, it must be longer than 7 caracter" })
-	}
+
 	try {
 		const passwordHashed = await bcrypt.hash(password, 10)
 		const user = await prisma.user.create({
@@ -42,7 +50,6 @@ export const userCreate = async (req: Request, res: Response) => {
 			}
 		}
 		return res.status(500).json({ message: "server was " })
-
 	}
 }
 
@@ -61,7 +68,7 @@ export const login = async (req: Request, res: Response) => {
 			return res.status(400).json({ message: "email or passwor is not correct" });
 		}
 	} catch (error) {
-		return res.status(500).json({ message: "server was crashed", error })
+		return res.status(500).json({ message: "server was crashed", error });
 	}
 }
 
