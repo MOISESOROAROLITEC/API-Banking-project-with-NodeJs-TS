@@ -1,5 +1,6 @@
 import Joi = require("joi");
 import * as iban from "iban-ts";
+import { ibanValidator } from "../common/validator";
 
 export const withdrawalValidator = Joi.object({
 	accountEmmiterIban: Joi.string()
@@ -11,56 +12,53 @@ export const withdrawalValidator = Joi.object({
 			}
 		})
 		.required(),
+	accountReciver: Joi.string(),
 	accountPassword: Joi.string()
 		.min(8)
 		.max(50)
 		.required(),
 	amount: Joi.number()
+		.min(1)
 		.required(),
+	transactionType: Joi.string(),
 });
 
 export const depositValidator = Joi.object({
-	emmiterIban: Joi.string()
+	accountEmmiterIban: Joi.string()
+		.custom((value, helpers) => {
+			if (iban.isValid(value)) {
+				return value
+			} else {
+				helpers.error("emmiter Iban is nont correct")
+			}
+		})
 		.required(),
-	reciverIban: Joi.string()
-		.required(),
+	accountReciver: Joi.string(),
 	amount: Joi.number()
+		.min(1)
 		.required(),
-	password: Joi.string()
+	accountPassword: Joi.string()
 		.min(8)
-		.max(50)
-		.required(),
-	transactionType: Joi.string()
-		.pattern(/^(debit|credit|deposit|card)$/)
-		.message("allow currency : 'debit', 'credit', 'deposit', 'card'")
-		.required(),
-	bic: Joi.string()
-		.pattern(/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/)
-		.message("BIC format is not correct, eg: DEUIUREI")
-		.required(),
-	type: Joi.string()
-		.pattern(/^(savings|blocked)$/)
-		.message("allow type : 'savings', 'blocked'")
-		.required()
+		.max(50),
+	reciverIban: Joi.string(),
+	transactionType: Joi.string(),
 });
 
 export const transferValidator = Joi.object({
-	emmiterIban: Joi.string()
+	accountEmmiterIban: Joi.string()
+		.pattern(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{4}[0-9]{7}([A-Z0-9]{0,15})?$/)
+		.message("emmiter Iban is nont correct")
 		.required(),
-	reciverIban: Joi.string()
+	accountReciver: Joi.string()
+		.pattern(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{4}[0-9]{7}([A-Z0-9]{0,15})?$/)
+		.message("reciver Iban is nont correct")
+		.required(),
+	accountPassword: Joi.string()
+		.min(8)
+		.max(50)
 		.required(),
 	amount: Joi.number()
+		.min(1)
 		.required(),
-	transactionType: Joi.string()
-		.pattern(/^(debit|credit|deposit|card)$/)
-		.message("allow currency : 'debit', 'credit', 'deposit', 'card'")
-		.required(),
-	bic: Joi.string()
-		.pattern(/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/)
-		.message("BIC format is not correct, eg: DEUIUREI")
-		.required(),
-	type: Joi.string()
-		.pattern(/^(savings|blocked)$/)
-		.message("allow type : 'savings', 'blocked'")
-		.required()
+	transactionType: Joi.string(),
 });

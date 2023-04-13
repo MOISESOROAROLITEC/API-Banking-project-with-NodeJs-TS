@@ -1,1 +1,1 @@
-export const availableTransactionTypes: string[] = ["debit", "credit", "transfert"];
+export const availableTransactionTypes: string[] = ["debit", "credit", "transfer"];

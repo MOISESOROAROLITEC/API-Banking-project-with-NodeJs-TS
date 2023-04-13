@@ -1,8 +1,8 @@
 import express = require("express");
-import { createWithdrawalTransaction } from "./controller";
+import { createTransaction } from "./controller";
 
 const transactionRoutes = express.Router();
 
-transactionRoutes.post("/withdrawal", createWithdrawalTransaction)
+transactionRoutes.post("/do-transaction", createTransaction)
 
 export default transactionRoutes;

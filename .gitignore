@@ -3,6 +3,7 @@ test/
 dist/
 src/prisma/migrations/
 src/prisma/my*
+type_declarations/
 
 .env
 package-lock.json
