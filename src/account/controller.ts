@@ -2,9 +2,9 @@ import { Request, Response } from "express";
 import { createAccouteValidator } from "./validator";
 import { PrismaClient } from "@prisma/client";
 import * as iban from "ibannumber-generator";
-import * as isIBAN from 'iban-checker';
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import * as bcryptjs from 'bcryptjs'
+import { ibanValidator } from "../common/validator";
 
 const prisma = new PrismaClient();
 
@@ -31,7 +31,8 @@ export const createAccount = async (req: Request, res: Response) => {
 
 export const getOneAccount = async (req: Request, res: Response) => {
 	try {
-		const isValidateIban = isIBAN(req.params.id)
+
+		const isValidateIban = ibanValidator(req.params.id)
 		if (!isValidateIban) {
 			return res.status(400).json({ message: "IBAN format is not correct" })
 		}

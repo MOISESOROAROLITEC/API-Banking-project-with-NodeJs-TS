@@ -1,4 +1,5 @@
 import * as dotenv from 'dotenv'
+import { boolean } from 'joi';
 import * as jwt from "jsonwebtoken";
 
 dotenv.config()
@@ -25,4 +26,9 @@ export function generateToken(userData: object): string {
 	const options = { expiresIn: '1d' };
 	const secretKey = process.env.SECRET_KEY || "";
 	return jwt.sign(userData, secretKey, options);
+}
+
+export function ibanValidator(iban: string): boolean {
+	const regex: RegExp = /^[A-Z]{2}[0-9]{2}[A-Z0-9]{4}[0-9]{7}([A-Z0-9]{0,15})?$/;
+	return regex.test(iban);
 }
