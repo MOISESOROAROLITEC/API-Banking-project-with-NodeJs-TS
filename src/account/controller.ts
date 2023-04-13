@@ -4,7 +4,7 @@ import { PrismaClient } from "@prisma/client";
 import * as iban from "ibannumber-generator";
 import * as isIBAN from 'iban-checker';
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-
+import * as bcryptjs from 'bcryptjs'
 
 const prisma = new PrismaClient();
 
@@ -15,6 +15,7 @@ export const createAccount = async (req: Request, res: Response) => {
 		if (isValidate) {
 			return res.status(400).json({ message: isValidate })
 		}
+		req.body.password = await bcryptjs.hash(req.body.password, 10);
 		const account = await prisma.account.create({ data: { iban: IBAN, ...req.body } })
 		return res.status(201).json(account)
 	} catch (error) {
