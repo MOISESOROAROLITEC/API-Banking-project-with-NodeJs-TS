@@ -53,16 +53,18 @@ export const createTransaction = async (req: Request, res: Response) => {
 					message: `the amount entered is greater than the amount in the account. The amount available is ${emmiterAccount.balance}`
 				});
 			}
-			reciverAcount = await prisma.account.findUnique({ where: { iban: accountReciverIban } });
-			if (!reciverAcount) {
-				return res.status(400).json({
-					message: `not reciver account with IBAN : ${accountReciverIban}`
-				})
-			} else {
-				const updateAmount: number = reciverAcount.balance + +amount
-				await prisma.account.update({
-					where: { iban: accountReciverIban }, data: { balance: updateAmount }
-				});
+			if (!(transactionType === "debit")) {
+				reciverAcount = await prisma.account.findUnique({ where: { iban: accountReciverIban } });
+				if (!reciverAcount) {
+					return res.status(400).json({
+						message: `not reciver account with IBAN : ${accountReciverIban}`
+					})
+				} else {
+					const updateAmount: number = reciverAcount.balance + +amount
+					await prisma.account.update({
+						where: { iban: accountReciverIban }, data: { balance: updateAmount }
+					});
+				}
 			}
 		} else {
 			newAmount = emmiterAccount.balance + +amount;
@@ -93,17 +95,3 @@ export const createTransaction = async (req: Request, res: Response) => {
 		return res.status(500).json({ message: "server was crashed", error })
 	}
 }
-
-// export const getOneAccount = async (req: Request, res: Response) => {
-// 	try {
-// 	} catch (error) {
-// 		return res.status(500).json({ message: "server was crashed", error })
-// 	}
-// }
-
-// export const getAccounts = async (req: Request, res: Response) => {
-// 	try {
-// 	} catch (error) {
-// 		return res.status(500).json({ message: "server was crashed", error })
-// 	}
-// }
