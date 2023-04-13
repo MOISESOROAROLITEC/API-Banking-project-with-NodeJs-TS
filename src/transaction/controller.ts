@@ -30,17 +30,16 @@ export const createTransaction = async (req: Request, res: Response) => {
 			})
 		}
 		const { accountEmmiterIban, accountPassword, amount, transactionType } = req.body;
-		const accountReciver = transactionType != "transfer" ? "null" : req.body.accountReciver;
+		const accountReciverIban: string = transactionType != "transfer" ? "null" : req.body.accountReciver;
 		var validator = getTransactionValidationType(transactionType)
 		const isValidate = validator.validate(req.body).error?.details[0].message
-		if (isValidate) {
-			return res.status(400).json({ message: isValidate })
-		}
+		if (isValidate) { return res.status(400).json({ message: isValidate }) }
 		const emmiterAccount = await prisma.account.findUnique({ where: { iban: accountEmmiterIban } })
 		if (!emmiterAccount) {
 			return res.status(400).json({ message: `not account with IBAN : ${accountEmmiterIban}` })
 		}
 		let newAmount: number
+		let reciverAcount
 
 		if (!(transactionType === "credit")) {
 			const matchPassword = await bcryptjs.compare(accountPassword, emmiterAccount.password);
@@ -54,15 +53,15 @@ export const createTransaction = async (req: Request, res: Response) => {
 					message: `the amount entered is greater than the amount in the account. The amount available is ${emmiterAccount.balance}`
 				});
 			}
-			const reciverAcount = await prisma.account.findUnique({ where: { iban: accountReciver } });
+			reciverAcount = await prisma.account.findUnique({ where: { iban: accountReciverIban } });
 			if (!reciverAcount) {
 				return res.status(400).json({
-					message: `not reciver account with IBAN : ${accountReciver}`
+					message: `not reciver account with IBAN : ${accountReciverIban}`
 				})
 			} else {
 				const updateAmount: number = reciverAcount.balance + +amount
 				await prisma.account.update({
-					where: { iban: accountReciver }, data: { balance: updateAmount }
+					where: { iban: accountReciverIban }, data: { balance: updateAmount }
 				});
 			}
 		} else {
@@ -74,14 +73,21 @@ export const createTransaction = async (req: Request, res: Response) => {
 		const transaction = await prisma.transaction.create({
 			data: {
 				transactionType,
-				accountReciver,
-				amount: amount,
+				accountReciver: accountReciverIban,
+				amount,
 				AccountEmmiter: {
 					connect: { iban: accountEmmiterIban }
 				}
 			}
 		})
-		return res.status(201).json({ transaction })
+		const { id, createAt, updateAt } = transaction
+		return res.status(201).json({
+			id, transactionType,
+			accountEmmiterIban, emmiterName: emmiterAccount.name,
+			emmiterEmail: emmiterAccount.email, currency: emmiterAccount.currency,
+			accountReciverIban, reciverName: reciverAcount?.name, reciverEmail: reciverAcount?.email,
+			createAt, updateAt
+		})
 	} catch (error) {
 		console.log({ error });
 		return res.status(500).json({ message: "server was crashed", error })
