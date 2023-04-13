@@ -3,7 +3,7 @@ import dotenv = require('dotenv');
 import userRoutes from './user/route';
 import bodyParser = require("body-parser");
 import accountRoutes from "./account/route";
-
+import transactionRoutes from "./transaction/route";
 
 dotenv.config();
 
@@ -15,7 +15,8 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
 app.use("/", userRoutes);
-app.use("/", accountRoutes)
+app.use("/", accountRoutes);
+app.use("/transaction", transactionRoutes);
 
 app.listen(PORT, () => {
 	console.log(`Server starting at : localhost: ${PORT}`);
