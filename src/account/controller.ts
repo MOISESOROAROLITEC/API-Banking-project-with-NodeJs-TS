@@ -57,7 +57,6 @@ export const getAccounts = async (req: Request, res: Response) => {
 		if (!accounts) {
 			return res.status(200).json({ accounts })
 		}
-
 		const totalRecords: number = await prisma.account.count();
 		const totalPages: number = take ? Math.ceil(totalRecords / take) : 1;
 		const currentPage = skip ? skip : 1;
