@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Account, PrismaClient, SubAccount } from "@prisma/client";
 import { depositValidator, transferValidator, withdrawalValidator } from "./validator";
 import * as bcryptjs from 'bcryptjs'
 import { availableTransactionTypes } from "../common/constantes";
@@ -32,7 +32,7 @@ export const createTransaction = async (req: Request, res: Response) => {
 		var validator = getTransactionValidationType(transactionType)
 		const isValidate = validator.validate(req.body).error?.details[0].message
 		if (isValidate) { return res.status(400).json({ message: isValidate }) }
-		let emmiterAccount = await prisma.account.findUnique({ where: { iban: accountEmmiterIban } })
+		let emmiterAccount: Account | SubAccount | null = await prisma.account.findUnique({ where: { iban: accountEmmiterIban } })
 		if (!emmiterAccount) {
 			emmiterAccount = await prisma.subAccount.findUnique({ where: { iban: accountEmmiterIban } })
 		}
@@ -93,8 +93,7 @@ export const createTransaction = async (req: Request, res: Response) => {
 		const { id, createAt, updateAt } = transaction
 		return res.status(201).json({
 			id, transactionType,
-			accountEmmiterIban, emmiterName: emmiterAccount.name,
-			emmiterEmail: emmiterAccount.email, amount, currency: emmiterAccount.currency,
+			accountEmmiterIban, emmiterName: emmiterAccount.name, amount, currency: emmiterAccount.currency,
 			accountReciverIban, reciverName: reciverAcount?.name, reciverEmail: reciverAcount?.email,
 			createAt, updateAt
 		})
