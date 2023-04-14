@@ -1,11 +1,9 @@
 import { Request, Response } from "express";
-import { Account, Prisma, PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { depositValidator, transferValidator, withdrawalValidator } from "./validator";
-import * as iban from "iban-ts";
 import * as bcryptjs from 'bcryptjs'
 import { availableTransactionTypes } from "../common/constantes";
 import Joi = require("joi");
-import { ibanValidator } from "../common/validator";
 const prisma = new PrismaClient();
 
 function transactionTypeIsValide(type: string): boolean {
