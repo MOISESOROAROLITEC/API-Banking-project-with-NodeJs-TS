@@ -27,6 +27,23 @@ model Account {
   createAt    DateTime      @default(now())
   updateAt    DateTime      @updatedAt
   transaction Transaction[]
+  SubAccount  SubAccount[]
+}
+
+model SubAccount {
+  iban              String   @id @unique
+  name              String
+  number            String   @unique
+  email             String   @unique
+  password          String
+  balance           Float
+  currency          String
+  bic               String
+  type              String   @default("epargne")
+  createAt          DateTime @default(now())
+  updateAt          DateTime @updatedAt
+  AccountParent     Account? @relation(fields: [accountParentIban], references: [iban])
+  accountParentIban String?
 }
 
 model Transaction {
