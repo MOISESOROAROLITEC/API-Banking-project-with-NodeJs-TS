@@ -91,7 +91,34 @@ export const createTransaction = async (req: Request, res: Response) => {
 			createAt, updateAt
 		})
 	} catch (error) {
-		console.log({ error });
+		return res.status(500).json({ message: "server was crashed", error })
+	}
+}
+
+export const getOneTransaction = async (req: Request, res: Response) => {
+	try {
+		const id: number = +req.params.id
+		if (!id) {
+			return res.status(400).json({ message: `you should provide id and it should be a number` })
+		}
+		const transaction = await prisma.transaction.findUnique({ where: { id } });
+		if (!transaction) {
+			return res.status(404).json({ message: `nothing transaction with id : ${id}` })
+		}
+		return res.status(200).json(transaction);
+	} catch (error) {
+		return res.status(500).json({ message: "server was crashed", error })
+	}
+}
+
+export const getAllTransactions = async (req: Request, res: Response) => {
+	try {
+		const transaction = await prisma.transaction.findMany();
+		if (!transaction) {
+			return res.status(200).json({ message: `nothing found` })
+		}
+		return res.status(200).json(transaction);
+	} catch (error) {
 		return res.status(500).json({ message: "server was crashed", error })
 	}
 }
