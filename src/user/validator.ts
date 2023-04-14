@@ -2,7 +2,6 @@ import Joi = require("joi");
 
 export const createUserValidator = Joi.object({
 	name: Joi.string()
-		.alphanum()
 		.min(3).message("name length must be longer than 2 characters")
 		.max(30).message("name length can not be longer than 30 characters")
 		.required(),
