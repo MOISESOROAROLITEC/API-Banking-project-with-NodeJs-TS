@@ -86,7 +86,7 @@ export const createTransaction = async (req: Request, res: Response) => {
 		return res.status(201).json({
 			id, transactionType,
 			accountEmmiterIban, emmiterName: emmiterAccount.name,
-			emmiterEmail: emmiterAccount.email, currency: emmiterAccount.currency,
+			emmiterEmail: emmiterAccount.email, amount, currency: emmiterAccount.currency,
 			accountReciverIban, reciverName: reciverAcount?.name, reciverEmail: reciverAcount?.email,
 			createAt, updateAt
 		})
@@ -112,12 +112,18 @@ export const getOneTransaction = async (req: Request, res: Response) => {
 }
 
 export const getAllTransactions = async (req: Request, res: Response) => {
+	const take = Number(req.query.limit) || undefined;
+	const skip = Number(req.query.page) || undefined;
 	try {
-		const transaction = await prisma.transaction.findMany();
+		const transaction = await prisma.transaction.findMany({ take, skip });
 		if (!transaction) {
-			return res.status(200).json({ message: `nothing found` })
+			return res.status(200).json({ message: `nothing found`, transaction })
 		}
-		return res.status(200).json(transaction);
+		const totalRecords: number = await prisma.transaction.count();
+		const totalPages: number = take ? Math.ceil(totalRecords / take) : 1;
+		const currentPage = skip ? skip : 1;
+
+		return res.status(200).json({ totalRecords, totalPages, currentPage, transaction });
 	} catch (error) {
 		return res.status(500).json({ message: "server was crashed", error })
 	}
