@@ -32,9 +32,18 @@ export const createTransaction = async (req: Request, res: Response) => {
 		var validator = getTransactionValidationType(transactionType)
 		const isValidate = validator.validate(req.body).error?.details[0].message
 		if (isValidate) { return res.status(400).json({ message: isValidate }) }
-		const emmiterAccount = await prisma.account.findUnique({ where: { iban: accountEmmiterIban } })
+		let emmiterAccount = await prisma.account.findUnique({ where: { iban: accountEmmiterIban } })
 		if (!emmiterAccount) {
-			return res.status(400).json({ message: `not account with IBAN : ${accountEmmiterIban}` })
+			emmiterAccount = await prisma.subAccount.findUnique({ where: { iban: accountEmmiterIban } })
+		}
+		if (!emmiterAccount) {
+			return res.status(404).json({ message: `not account with IBAN : ${accountEmmiterIban}` })
+		}
+		if (emmiterAccount.type === "blocked" && transactionType !== "credit") {
+			return res.status(400).json({
+				message: `It is impossible to make a transfer or withdrawal from a blocked account.
+				first unlock the account.`
+			})
 		}
 		let newAmount: number
 		let reciverAcount
@@ -48,7 +57,8 @@ export const createTransaction = async (req: Request, res: Response) => {
 				newAmount = emmiterAccount.balance - +amount
 			} else {
 				return res.status(400).json({
-					message: `the amount entered is greater than the amount in the account. The amount available is ${emmiterAccount.balance}`
+					message: `the amount entered is greater than the amount in the account.
+										The amount available is ${emmiterAccount.balance}`
 				});
 			}
 			if (!(transactionType === "debit")) {
