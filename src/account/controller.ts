@@ -31,7 +31,6 @@ export const createAccount = async (req: Request, res: Response) => {
 
 export const getOneAccount = async (req: Request, res: Response) => {
 	try {
-
 		const isValidateIban = ibanValidator(req.params.id)
 		if (!isValidateIban) {
 			return res.status(400).json({ message: "IBAN format is not correct" })

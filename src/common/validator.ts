@@ -28,7 +28,6 @@ export function generateToken(userData: object): string {
 }
 
 export function ibanValidator(iban: string): boolean {
-	console.log(ibanValidator(iban), iban);
 	const regex: RegExp = /^[A-Z]{2}[0-9]{2}[A-Z0-9]{4}[0-9]{7}([A-Z0-9]{0,15})?$/;
 	return regex.test(iban);
 }
