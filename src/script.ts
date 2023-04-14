@@ -4,6 +4,7 @@ import userRoutes from './user/route';
 import bodyParser = require("body-parser");
 import accountRoutes from "./account/route";
 import transactionRoutes from "./transaction/route";
+import subAccountRoutes from "./subAccount/route";
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use("/", userRoutes);
 app.use("/", accountRoutes);
 app.use("/transaction", transactionRoutes);
+app.use('/subaccount', subAccountRoutes)
 
 app.listen(PORT, () => {
 	console.log(`Server starting at : localhost: ${PORT}`);
