@@ -15,10 +15,9 @@ export const createSubAccount = async (req: Request, res: Response) => {
 			return res.status(400).json({ message: isValidate })
 		}
 		const password = await bcryptjs.hash(req.body.password, 10);
-		const email = req.body.email || "nul"
 		const { name, number, currency, bic, type, parentAccountIban } = req.body;
 		const balance = +req.body.balance
-		const account = await prisma.subAccount.create({ data: { iban: IBAN, name, number, balance, currency, bic, type, email, password, AccountParent: { connect: { iban: parentAccountIban } } } })
+		const account = await prisma.subAccount.create({ data: { iban: IBAN, name, number, balance, currency, bic, type, password, AccountParent: { connect: { iban: parentAccountIban } } } })
 		return res.status(201).json(account)
 	} catch (error) {
 		if (error instanceof PrismaClientKnownRequestError) {

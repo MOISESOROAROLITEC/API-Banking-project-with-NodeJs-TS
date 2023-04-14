@@ -11,8 +11,6 @@ export const createSubAccouteValidator = Joi.object({
 		.pattern(/^(?:\d{10}|(?:\+|00)225\d{10})$/)
 		.message("Incorrect number, please enter a 10 digit number. eg: 0589635874 or 225 0589635874 or 00225 0589635874 or +225 0589635874")
 		.required(),
-	email: Joi.string()
-		.email(),
 	password: Joi.string()
 		.min(8)
 		.max(50)
