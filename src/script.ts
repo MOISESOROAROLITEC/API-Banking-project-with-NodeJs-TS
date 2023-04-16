@@ -20,6 +20,8 @@ app.use("/", accountRoutes);
 app.use("/transaction", transactionRoutes);
 app.use('/subaccount', subAccountRoutes)
 
-app.listen(PORT, () => {
-	console.log(`Server starting at : localhost: ${PORT}`);
-});
+// app.listen(PORT, () => {
+// 	console.log(`Server starting at : localhost: ${PORT}`);
+// });
+
+export default app
