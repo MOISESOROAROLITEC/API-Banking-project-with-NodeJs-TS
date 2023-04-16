@@ -1,5 +1,4 @@
 const supertest = require('supertest');
-// import { Request } from 'express';
 import app from '../script';
 
 const req = supertest(app);
