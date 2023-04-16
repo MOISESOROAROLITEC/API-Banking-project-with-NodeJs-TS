@@ -31,27 +31,30 @@ model Account {
 }
 
 model SubAccount {
-  iban              String   @id @unique
+  iban              String        @id @unique
   name              String
-  number            String   @unique
+  number            String        @unique
   password          String
   balance           Float
   currency          String
   bic               String
-  type              String   @default("epargne")
-  createAt          DateTime @default(now())
-  updateAt          DateTime @updatedAt
-  AccountParent     Account? @relation(fields: [accountParentIban], references: [iban])
+  type              String        @default("epargne")
+  createAt          DateTime      @default(now())
+  updateAt          DateTime      @updatedAt
+  AccountParent     Account?      @relation(fields: [accountParentIban], references: [iban])
   accountParentIban String?
+  Transaction       Transaction[]
 }
 
 model Transaction {
-  id                 Int      @id @default(autoincrement())
+  id                 Int         @id @default(autoincrement())
   amount             Float
   transactionType    String
   accountReciver     String
-  createAt           DateTime @default(now())
-  updateAt           DateTime @updatedAt
-  AccountEmmiter     Account? @relation(fields: [accountEmmiterIban], references: [iban])
+  createAt           DateTime    @default(now())
+  updateAt           DateTime    @updatedAt
+  AccountEmmiter     Account?    @relation(fields: [accountEmmiterIban], references: [iban])
   accountEmmiterIban String?
+  SubAccountEmmiter  SubAccount? @relation(fields: [subAccountIban], references: [iban])
+  subAccountIban     String?
 }
