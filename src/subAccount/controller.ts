@@ -32,7 +32,6 @@ export const createSubAccount = async (req: Request, res: Response) => {
 	}
 }
 
-
 export const getOneSubAccount = async (req: Request, res: Response) => {
 	try {
 		const isValidateIban = ibanValidator(req.params.id)
@@ -69,6 +68,18 @@ export const getSubAccounts = async (req: Request, res: Response) => {
 		return res.status(200).json({
 			totalRecords, totalPages, currentPage, accounts
 		})
+	} catch (error) {
+		return res.status(500).json({ message: "server was crashed", error })
+	}
+}
+
+export const removeSubAccounts = async (req: Request, res: Response) => {
+	try {
+		const { count } = await prisma.subAccount.deleteMany();
+		if (+count === 0) {
+			return res.status(200).json({ massage: `Accounts list is already empty` })
+		}
+		return res.status(200).json({ massage: `${count} Accounts has been deleted` })
 	} catch (error) {
 		return res.status(500).json({ message: "server was crashed", error })
 	}

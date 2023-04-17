@@ -32,7 +32,6 @@ describe('Test account Routes', () => {
 	});
 
 
-
 	describe("create an account", () => {
 		const email = "sorogmai.com";
 		it("Should return 400 as status code and error message", async () => {
