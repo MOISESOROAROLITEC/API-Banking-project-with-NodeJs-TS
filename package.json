@@ -39,6 +39,7 @@
 		"express-validator": "^6.15.0",
 		"iban-ts": "^0.2.0",
 		"ibannumber-generator": "^1.0.0",
+		"jest-mock-extended": "^3.0.4",
 		"joi": "^17.9.1",
 		"jsonwebtoken": "^9.0.0",
 		"prisma": "^4.12.0",
