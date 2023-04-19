@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { availableKeys, generateToken, isValidEmail, isValideName, isValidePassword } from "../common/validator";
+import { generateToken } from "../common/validator";
 import * as bcrypt from 'bcryptjs'
 import { createUserValidator, loginValidator } from "./validator";
 
@@ -30,7 +30,7 @@ export const userCreate = async (req: Request, res: Response) => {
 	} catch (error) {
 		if (error instanceof PrismaClientKnownRequestError) {
 			if (error.code === 'P2002') {
-				return res.status(400).json({ message: `User with this email is already exist` })
+				return res.status(401).json({ message: `User with this email is already exist` })
 			}
 		}
 		return res.status(500).json({ message: "server was " })
@@ -69,4 +69,9 @@ export const userList = async (req: Request, res: Response) => {
 	return res.status(200).json({
 		users
 	})
+}
+export const removeUsers = async () => {
+
+	await prisma.user.deleteMany()
+
 }
