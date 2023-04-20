@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { generateToken } from "../common/validator";
 import * as bcrypt from 'bcryptjs'
-import { createUserValidator, loginValidator } from "./validator";
+import { createUserValidator, loginValidator, updateUserValidator } from "./validator";
 
 
 const prisma = new PrismaClient()
@@ -59,7 +59,6 @@ export const login = async (req: Request, res: Response) => {
 		return res.status(500).json({ message: "server was crashed", error });
 	}
 }
-
 export const userList = async (req: Request, res: Response) => {
 	const take = Number(req.query.limit) || undefined;
 	const skip = Number(req.query.page) || undefined;
@@ -69,6 +68,29 @@ export const userList = async (req: Request, res: Response) => {
 	return res.status(200).json({
 		users
 	})
+}
+export const update = async (req: Request, res: Response) => {
+	try {
+		const { userEmail, name, password, email } = req.body
+		const isValidate = updateUserValidator.validate(req.body).error?.details[0].message;
+		if (isValidate) {
+			return res.status(400).json({ message: isValidate })
+		}
+		const passwordHashed = password ? bcrypt.hashSync(password) : undefined
+		const user = await prisma.user.update({ where: { email: userEmail }, data: { email, name, password: passwordHashed } })
+		if (!user) {
+			return res.status(404).json({ message: "cannot find this user" })
+		}
+		const token = generateToken({ id: user.id, name: user.name })
+		return res.status(200).json({ token })
+	} catch (error) {
+		if (error instanceof PrismaClientKnownRequestError) {
+			if (error.code === "P2025") {
+				return res.status(404).json({ message: "cannot find this user in database" })
+			}
+		}
+		return res.status(500).json({ message: "server was crashed", error })
+	}
 }
 export const removeUsers = async () => {
 
