@@ -22,5 +22,19 @@ export const loginValidator = Joi.object({
 		.required(),
 
 	password: Joi.string()
+		.min(8).max(80)
 		.required(),
+})
+
+export const updateUserValidator = Joi.object({
+	userEmail: Joi.string()
+		.email()
+		.required(),
+	name: Joi.string()
+		.min(3).message("name length must be longer than 2 characters")
+		.max(30).message("name length can not be longer than 30 characters"),
+	email: Joi.string()
+		.email(),
+	password: Joi.string()
+		.min(8).max(80)
 })

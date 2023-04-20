@@ -11,7 +11,7 @@ const prisma = new PrismaClient()
 export const userCreate = async (req: Request, res: Response) => {
 	const { name, email, password } = req.body;
 
-	const isValidate = createUserValidator.validate(req.body).error?.details[0].message
+	const isValidate = createUserValidator.validate(req.body).error?.details[0].message;
 	if (isValidate) {
 		return res.status(400).json({ message: isValidate })
 	}
