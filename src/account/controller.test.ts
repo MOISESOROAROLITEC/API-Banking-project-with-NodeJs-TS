@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { DeepMockProxy } from "jest-mock-extended";
 
 const prismaMock = {
-	user: {
+	account: {
 		create: jest.fn()
 	},
 } as DeepMockProxy<PrismaClient>;
@@ -32,12 +32,12 @@ describe('Test account Routes', () => {
 		const account = {
 			name: "soro moise",
 			email: "sm@gmail.com",
-			number: "0005000000",
-			password: "123456789",
+			number: "0564796221",
+			password: "jesuislepppassword",
 			balance: 5000,
 			currency: "CFA",
 			bic: "DEUIUREI",
-			type: "blocked"
+			type: "savings"
 		};
 
 		let req: Request;
@@ -50,13 +50,21 @@ describe('Test account Routes', () => {
 			json: jest.fn()
 		} as unknown as Response;
 
-		it("Should return 401 as status code and error message", async () => {
-			// prismaMock.user.create.mockRejectedValue(new PrismaClientKnownRequestError(`Account with this ${account.email} is already exist`, { code: "P2002", clientVersion: "" }))
-
+		it("Should return 400 as status code and error message to say : Account with this email is already exist", async () => {
+			prismaMock.account.create.mockRejectedValue(new PrismaClientKnownRequestError(`Account with this ${account.email} is already exist`, { code: "P2002", clientVersion: "jhh", meta: { target: ['email'] } }))
 			await createAccount(req, res);
 
 			expect(res.status).toHaveBeenCalledWith(400);
-			expect(res.json).toContain("res");
+			expect(res.json).toHaveBeenCalledWith({ message: "Account with this email is already exist" });
+		});
+
+		it("Should return 400 as status code and error message to say : eamil most bee valid", async () => {
+			let newReq = req;
+			newReq.body.eamil = "hi"
+			await createAccount(newReq, res);
+
+			expect(res.status).toBeCalledWith(400);
+			expect(res.json).toHaveBeenCalledWith({ message: '"eamil" is not allowed' });
 		});
 
 		it('should create a new account', async () => {
