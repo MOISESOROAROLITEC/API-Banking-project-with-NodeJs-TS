@@ -27,8 +27,8 @@ export const createAccouteValidator = Joi.object({
 		.message("BIC format is not correct, eg: DEUIUREI")
 		.required(),
 	type: Joi.string()
-		.pattern(/^(savings|blocked|transfer)$/)
-		.message("allow type : 'savings', 'blocked', 'transfer'")
+		.pattern(/^(savings|blocked|current)$/)
+		.message("allow type : 'savings', 'blocked', 'current'")
 		.required()
 })
 
@@ -38,7 +38,7 @@ export const changeAccountTypeValidator = Joi.object({
 	password: Joi.string()
 		.required(),
 	newType: Joi.string()
-		.pattern(/^(savings|blocked|transfer)$/)
-		.message("allow type : 'savings', 'blocked', 'transfer'")
+		.pattern(/^(savings|blocked|current)$/)
+		.message("allow type : 'savings', 'blocked', 'current'")
 		.required()
 })
