@@ -1,21 +1,9 @@
-## Before running tests
+# How to run this app
 
-> Before running the tests make sure you comment out the portion of the code that starts server .
 
-##### Code portion
+## **Running tests**
 
-```typescript
-app.listen(PORT, () => {
-	console.log(`Server starting at : localhost: ${PORT}`);
-});
-```
+* 
+## **Running server**
 
----
-
-> Don't forget to export the application with 
-
-##### Code portion
-```typescript
- export default app
-``` 
->at the end of the main file.// import { Request } from 'express';
+*
