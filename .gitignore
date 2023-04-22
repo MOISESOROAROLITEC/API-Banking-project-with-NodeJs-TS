@@ -8,6 +8,7 @@ type_declarations/
 .env
 package-lock.json
 *.js
+client.ts
 
 *.vscode
 *.sql
