@@ -8,12 +8,15 @@ const prismaMock = {
 		findMany: jest.fn(),
 		count: jest.fn()
 	},
+	subAccount: {
+		findUnique: jest.fn()
+	}
 } as DeepMockProxy<PrismaClient>;
 jest.mock("@prisma/client", () => ({
 	PrismaClient: jest.fn().mockImplementation(() => prismaMock)
 }));
 
-import { createAccount, getAccounts, getOneAccount } from "./controller";
+import { changeAccountType, createAccount, getAccounts, getOneAccount } from "./controller";
 import { Request, Response } from "express";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
@@ -137,5 +140,38 @@ describe('Test account Routes', () => {
 			expect(res.status).toHaveBeenCalledWith(200);
 			expect(res.json).toHaveBeenLastCalledWith([]);
 		});
+	});
+
+	describe("Change account type", () => {
+		const data = {
+			iban: "CI45E9863355889947855222200123",
+			newType: "savings",
+			password: "123654789"
+		}
+		let req: Request;
+		let res: Response;
+		req = {
+			body: { ...data }
+		} as Request;
+		res = {
+			status: jest.fn().mockReturnThis(),
+			json: jest.fn()
+		} as unknown as Response;
+		it("Should not found account. it'll return 404 as status code .", async () => {
+			prismaMock.account.findUnique.mockImplementation(() => { return null as never })
+			prismaMock.subAccount.findUnique.mockImplementation(() => { return null as never })
+
+			await changeAccountType(req, res)
+
+			expect(res.status).toHaveBeenCalledWith(404)
+			expect(res.json).toHaveBeenCalledWith({ message: `not account with IBAN : ${data.iban}` })
+		})
+		// it("Should change a account type", async () => {
+		// 	prismaMock.account.findUnique.mockImplementation(() => { return null as never });
+
+		// 	await changeAccountType(req, res)
+
+		// 	expect(res.status).toHaveBeenCalledWith(201)
+		// })
 	});
 });
