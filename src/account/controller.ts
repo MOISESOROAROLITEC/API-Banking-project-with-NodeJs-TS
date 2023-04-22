@@ -16,7 +16,7 @@ export const createAccount = async (req: Request, res: Response) => {
 			return res.status(400).json({ message: isValidate })
 		}
 		req.body.password = await bcryptjs.hash(req.body.password, 10);
-		const account = await prisma.account.create({ data: { iban: IBAN, ...req.body } })
+		const account: Account = await prisma.account.create({ data: { iban: IBAN, ...req.body } })
 		return (res.status(201).json(account))
 	} catch (error) {
 		if (error instanceof PrismaClientKnownRequestError) {
@@ -36,7 +36,7 @@ export const getOneAccount = async (req: Request, res: Response) => {
 		if (!isValidateIban) {
 			return res.status(400).json({ message: "IBAN format is not correct" })
 		}
-		const account = await prisma.account.findUnique({
+		const account: Account | null = await prisma.account.findUnique({
 			where: {
 				iban
 			}
@@ -54,7 +54,7 @@ export const getAccounts = async (req: Request, res: Response) => {
 	const take = Number(req.query.limit) || undefined;
 	const skip = Number(req.query.page) || undefined;
 	try {
-		const accounts = await prisma.account.findMany({ take, skip });
+		const accounts: Account[] = await prisma.account.findMany({ take, skip });
 		if (accounts.length === 0) {
 			return res.status(200).json(accounts)
 		}
@@ -108,7 +108,7 @@ export const changeAccountType = async (req: Request, res: Response) => {
 export const removeAccounts = async (req: Request, res: Response) => {
 	try {
 		const { count } = await prisma.account.deleteMany();
-		if (+count === 0) {
+		if (count === 0) {
 			return res.status(200).json({ massage: `Accounts list is already empty` })
 		}
 		return res.status(200).json({ massage: `${count} Accounts has been deleted` })
