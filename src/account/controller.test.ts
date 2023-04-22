@@ -1,17 +1,19 @@
-import { Account, PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { DeepMockProxy } from "jest-mock-extended";
 
 const prismaMock = {
 	account: {
 		create: jest.fn(),
-		findUnique: jest.fn()
+		findUnique: jest.fn(),
+		findMany: jest.fn(),
+		count: jest.fn()
 	},
 } as DeepMockProxy<PrismaClient>;
 jest.mock("@prisma/client", () => ({
 	PrismaClient: jest.fn().mockImplementation(() => prismaMock)
 }));
 
-import { createAccount, getOneAccount } from "./controller";
+import { createAccount, getAccounts, getOneAccount } from "./controller";
 import { Request, Response } from "express";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
@@ -101,15 +103,39 @@ describe('Test account Routes', () => {
 	});
 
 	describe("Get all account", () => {
+		let req: Request;
+		let res: Response;
+		req = {
+			query: {}
+		} as Request;
+		res = {
+			status: jest.fn().mockReturnThis(),
+			json: jest.fn()
+		} as unknown as Response;
+		const accounts = [
+			{ iban: "CI45E9863355889947855222200022", ...account, createAt: new Date, updateAt: new Date },
+			{ iban: "CI45E9863355963587256222200022", ...account, createAt: new Date, updateAt: new Date }
+		];
+		it("Should return list of accounts and status code 200", async () => {
+			const findMany = prismaMock.account.findMany.mockImplementation(() => { return accounts as never })
+			prismaMock.account.count.mockImplementation(() => { return accounts.length as never })
 
-		it("Should return list of accounts", async () => {
-			expect("res").toBe("res");
-			expect("res").toContain("res");
+			await getAccounts(req, res)
+
+			expect(res.json).toHaveBeenCalledWith({ accounts, currentPage: 1, totalPages: 1, totalRecords: 2 })
+			expect(res.status).toHaveBeenCalledWith(200);
+			findMany.mockRestore()
+			findMany.mockReset()
 		});
 
 		it("Should return empty list", async () => {
-			expect("res").toBe("res");
-			expect("res").toContain("res");
+			prismaMock.account.findMany.mockImplementation(() => { return [] as never })
+			prismaMock.account.count.mockImplementation(() => { return 0 as never })
+
+			await getAccounts(req, res);
+
+			expect(res.status).toHaveBeenCalledWith(200);
+			expect(res.json).toHaveBeenLastCalledWith([]);
 		});
 	});
 });

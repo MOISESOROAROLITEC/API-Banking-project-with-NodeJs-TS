@@ -55,8 +55,8 @@ export const getAccounts = async (req: Request, res: Response) => {
 	const skip = Number(req.query.page) || undefined;
 	try {
 		const accounts = await prisma.account.findMany({ take, skip });
-		if (!accounts) {
-			return res.status(200).json({ accounts })
+		if (accounts.length === 0) {
+			return res.status(200).json(accounts)
 		}
 		const totalRecords: number = await prisma.account.count();
 		const totalPages: number = take ? Math.ceil(totalRecords / take) : 1;
@@ -101,12 +101,6 @@ export const changeAccountType = async (req: Request, res: Response) => {
 		}
 		return res.status(201).json({ emmiterUpdate })
 	} catch (error) {
-		if (error instanceof PrismaClientKnownRequestError) {
-			if (error.code === 'P2002') {
-				const target: string[] = error.meta!['target'] as string[]
-				return res.status(400).json({ message: `Account with this ${target[0]} is already exist` })
-			}
-		}
 		return res.status(500).json({ message: "server was crashed", error })
 	}
 }
