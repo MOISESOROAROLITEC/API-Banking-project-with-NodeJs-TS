@@ -6,9 +6,9 @@
 	"scripts": {
 		"test": "jest --verbose -i",
 		"dev": "nodemon --watch src --exec \"npm run compile-and-run\"",
-		"compile": "tsc",
+		"compile": "tsc src/script.ts --outDir dist",
 		"compile-and-run": "npm run compile && node dist/script.js",
-		"start": "nodemon --exec ts-node src/script.ts"
+		"start": "node dist/script.js"
 	},
 	"keywords": [
 		"nodejs",
