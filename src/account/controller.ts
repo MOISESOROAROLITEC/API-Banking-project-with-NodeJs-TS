@@ -17,7 +17,7 @@ export const createAccount = async (req: Request, res: Response) => {
 		}
 		req.body.password = await bcryptjs.hash(req.body.password, 10);
 		const account = await prisma.account.create({ data: { iban: IBAN, ...req.body } })
-		return res.status(201).json(account)
+		return (res.status(201).json(account))
 	} catch (error) {
 		if (error instanceof PrismaClientKnownRequestError) {
 			if (error.code === 'P2002') {
@@ -31,19 +31,20 @@ export const createAccount = async (req: Request, res: Response) => {
 
 export const getOneAccount = async (req: Request, res: Response) => {
 	try {
-		const isValidateIban = ibanValidator(req.params.id)
+		const iban = req.params.id.toUpperCase()
+		const isValidateIban = ibanValidator(iban)
 		if (!isValidateIban) {
 			return res.status(400).json({ message: "IBAN format is not correct" })
 		}
 		const account = await prisma.account.findUnique({
 			where: {
-				iban: req.params.id.toUpperCase()
+				iban
 			}
 		})
 		if (!account) {
 			return res.status(404).json({ message: "No account matches this IBAN" })
 		}
-		return res.status(200).json({ account })
+		return res.status(200).json(account)
 	} catch (error) {
 		return res.status(500).json({ message: "server was crashed", error })
 	}

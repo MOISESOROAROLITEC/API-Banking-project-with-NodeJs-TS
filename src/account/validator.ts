@@ -15,7 +15,6 @@ export const createAccouteValidator = Joi.object({
 		.email(),
 	password: Joi.string()
 		.min(8)
-		.max(50)
 		.required(),
 	balance: Joi.number()
 		.required(),
