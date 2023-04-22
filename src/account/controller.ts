@@ -106,6 +106,18 @@ export const changeAccountType = async (req: Request, res: Response) => {
 	}
 }
 
+export const removeOneAccount = async (req: Request, res: Response) => {
+	try {
+		const Account = await prisma.account.delete({ where: { iban: req.params.iban } })
+		if (!Account) {
+			return res.status(404).json({ massage: `Cannot find this account` })
+		}
+		return res.status(200).json(Account)
+	} catch (error) {
+		return res.status(500).json({ message: "server was crashed", error })
+	}
+}
+
 export const removeAccounts = async (req: Request, res: Response) => {
 	try {
 		const { count } = await prisma.account.deleteMany();
