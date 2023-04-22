@@ -81,13 +81,14 @@ export const changeAccountType = async (req: Request, res: Response) => {
 			return res.status(400).json({ message: isValidate })
 		}
 		let isAccount: boolean = true;
-		let emmiterAccount: Account | SubAccount | null = await prisma.account.findUnique({ where: { iban } })
+		let emmiterAccount: Account | SubAccount | null
+		emmiterAccount = await prisma.account.findUnique({ where: { iban } })
 		if (!emmiterAccount) {
 			emmiterAccount = await prisma.subAccount.findUnique({ where: { iban } })
+			if (!emmiterAccount) {
+				return res.status(404).json({ message: `not account with IBAN : ${iban}` })
+			}
 			isAccount = false;
-		}
-		if (!emmiterAccount) {
-			return res.status(404).json({ message: `not account with IBAN : ${iban}` })
 		}
 		const isMatch = await bcryptjs.compare(password, emmiterAccount.password);
 		if (!isMatch) {
