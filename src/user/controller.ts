@@ -92,8 +92,8 @@ export const update = async (req: Request, res: Response) => {
 		return res.status(500).json({ message: "server was crashed", error })
 	}
 }
-export const removeUsers = async () => {
+export const removeUsers = async (req: Request, res: Response) => {
 
-	await prisma.user.deleteMany()
-
+	const {count} = await prisma.user.deleteMany()
+	return res.status(200).json({ count })
 }
