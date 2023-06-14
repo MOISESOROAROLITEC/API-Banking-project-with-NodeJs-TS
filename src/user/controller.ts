@@ -26,7 +26,7 @@ export const userCreate = async (req: Request, res: Response) => {
 			}
 		})
 		const token = generateToken({ id: user.id, name: user.name })
-		return res.status(200).json({ token });
+		return res.status(200).json({ name: user.name, email: user.email, token: token });
 	} catch (error) {
 		if (error instanceof PrismaClientKnownRequestError) {
 			if (error.code === 'P2002') {
@@ -94,6 +94,6 @@ export const update = async (req: Request, res: Response) => {
 }
 export const removeUsers = async (req: Request, res: Response) => {
 
-	const {count} = await prisma.user.deleteMany()
+	const { count } = await prisma.user.deleteMany()
 	return res.status(200).json({ count })
 }
