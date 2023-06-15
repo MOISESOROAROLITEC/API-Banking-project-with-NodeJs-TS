@@ -30,7 +30,7 @@ export const userCreate = async (req: Request, res: Response) => {
 	} catch (error) {
 		if (error instanceof PrismaClientKnownRequestError) {
 			if (error.code === 'P2002') {
-				return res.status(401).json({ message: `User with this email is already exist` })
+				return res.status(401).json({ message: `Cette adresse email est déjà utilisé` })
 			}
 		}
 		return res.status(500).json({ message: "server was " })
@@ -46,14 +46,14 @@ export const login = async (req: Request, res: Response) => {
 		}
 		const user = await prisma.user.findUnique({ where: { email } });
 		if (!user) {
-			return res.status(404).json({ message: "email or passwor is not correct" });
+			return res.status(404).json({ message: "L'email ou le mot de passe est incorrect" });
 		}
 		const isMatch = bcrypt.compareSync(password, user.password);
-		if (isMatch) {
-			const token = generateToken({ id: user.id, name: user.name })
-			return res.status(200).json({ token });
+		if (!isMatch) {
+			return res.status(404).json({ message: "L'email ou le mot de passe est incorrect" });
 		}
-		return res.status(404).json({ message: "email or passwor is not correct" });
+		const token = generateToken({ id: user.id, name: user.name })
+		return res.status(200).json({ name: user.name, email: user.email, token });
 
 	} catch (error) {
 		return res.status(500).json({ message: "server was crashed", error });
@@ -79,14 +79,14 @@ export const update = async (req: Request, res: Response) => {
 		const passwordHashed = password ? bcrypt.hashSync(password) : undefined
 		const user = await prisma.user.update({ where: { email: userEmail }, data: { email, name, password: passwordHashed } })
 		if (!user) {
-			return res.status(404).json({ message: "cannot find this user" })
+			return res.status(404).json({ message: "Cet utilisateur est introuvable" })
 		}
 		const token = generateToken({ id: user.id, name: user.name })
 		return res.status(200).json({ token })
 	} catch (error) {
 		if (error instanceof PrismaClientKnownRequestError) {
 			if (error.code === "P2025") {
-				return res.status(404).json({ message: "cannot find this user in database" })
+				return res.status(404).json({ message: "Cet utilisateur est introuvable dans la base de données" })
 			}
 		}
 		return res.status(500).json({ message: "server was crashed", error })
