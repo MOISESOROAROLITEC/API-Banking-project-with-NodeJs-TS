@@ -24,24 +24,13 @@ export const withdrawalValidator = Joi.object({
 });
 
 export const depositValidator = Joi.object({
-	accountEmmiterIban: Joi.string()
-		.custom((value, helpers) => {
-			if (iban.isValid(value)) {
-				return value
-			} else {
-				helpers.error("emmiter Iban is nont correct")
-			}
-		})
+	accountEmmiterIban: Joi.string(),
+	accountReciver: Joi.string()
 		.required(),
-	accountReciver: Joi.string(),
 	amount: Joi.number()
 		.min(1)
 		.required(),
-	accountPassword: Joi.string()
-		.min(8)
-		.max(50),
-	reciverIban: Joi.string(),
-	transactionType: Joi.string(),
+	transactionType: Joi.string()
 });
 
 export const transferValidator = Joi.object({

@@ -35,12 +35,12 @@ describe("Test user routes", () => {
 			status: jest.fn().mockReturnThis(),
 			json: jest.fn()
 		} as unknown as Response;
-		it("should create a user account and return status code 200 and token", async () => {
+		it("should create a user account and return status code 200, user and token", async () => {
 			prismaMock.user.create.mockResolvedValue({ id: 0, ...user })
 			await userCreate(req, res)
 
 			expect(res.status).toHaveBeenCalledWith(200);
-			expect(res.json).toHaveBeenCalledWith({ token: expect.any(String) })
+			expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ token: String, name: String, email: String }))
 		});
 
 		it("should return 401 and a message to say : User with this email is already exist", async () => {

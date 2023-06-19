@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { Account, PrismaClient, SubAccount, Transaction } from "@prisma/client";
 import { depositValidator, transferValidator, withdrawalValidator } from "./validator";
-import * as bcryptjs from 'bcryptjs'
 import { availableTransactionTypes } from "../common/constantes";
 import Joi = require("joi");
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
@@ -21,14 +20,34 @@ function getTransactionValidationType(transactionType: string): Joi.ObjectSchema
 	}
 }
 
+export const creditAccount = async (req: Request, res: Response) => {
+	try {
+		const { iban, amount } = req.body
+		let accoutToCredit: Account | SubAccount | null = await prisma.account.findUnique({ where: { iban: iban } })
+		if (!accoutToCredit?.iban) {
+			accoutToCredit = await prisma.subAccount.findUnique({ where: { iban: iban } })
+			if (!accoutToCredit) {
+				return res.status(404).json({ massage: `Ce iban : '${iban}' ne correspond à aucun compte ou sous compte ` })
+			} else {
+				accoutToCredit = await prisma.subAccount.update({ where: { iban: iban }, data: { balance: accoutToCredit.balance + +amount } })
+			}
+		} else {
+			accoutToCredit = await prisma.account.update({ where: { iban: iban }, data: { balance: accoutToCredit.balance + +amount } })
+		}
+		return res.status(200).json(accoutToCredit)
+	} catch (error) {
+		return res.status(500).json({ massage: "Server was crached" })
+	}
+}
 export const createTransaction = async (req: Request, res: Response) => {
 	try {
 		if (!isTypeValide(req.body.transactionType)) {
 			return res.status(400).json({
-				message: `transaction type is not correct. correct type are : ${[...availableTransactionTypes]}`
+				message: `Le type de la transaction est incorrect. les types acceptés sont : ${[...availableTransactionTypes]}`
 			})
 		}
-		const { accountEmmiterIban, accountPassword, amount, transactionType } = req.body;
+
+		const { accountEmmiterIban, amount, transactionType } = req.body;
 		const accountReciverIban: string = transactionType != "transfer" ? "null" : req.body.accountReciver;
 		var transactionTypeValidator = getTransactionValidationType(transactionType)
 		const isValidate = transactionTypeValidator.validate(req.body).error?.details[0].message
@@ -40,23 +59,20 @@ export const createTransaction = async (req: Request, res: Response) => {
 			emmiterAccount = await prisma.subAccount.findUnique({ where: { iban: accountEmmiterIban } })
 		}
 		if (!emmiterAccount) {
-			return res.status(404).json({ message: `not account with IBAN : ${accountEmmiterIban}` })
+			return res.status(404).json({ message: `Aucun compte n'a ce IBAN : ${accountEmmiterIban}` })
 		}
 		if (emmiterAccount.type === "blocked" && transactionType !== "credit") {
-			return res.status(400).json({
-				message: `It is impossible to make a transfer or withdrawal from a blocked account.
-				first unlock the account.`
-			})
+			return res.status(400).json(
+				{
+					message: `Il est impossible de faire un retrait ou un trensfert à partie d'un compte blocké.`
+				}
+			)
 		}
 		let newAmount: number
 		let reciverAcount
 		let isAccount: boolean = true
 
 		if (!(transactionType === "credit")) {
-			const matchPassword = await bcryptjs.compare(accountPassword, emmiterAccount.password);
-			if (!matchPassword) {
-				return res.status(400).json({ message: "password is not correct" })
-			}
 			if (emmiterAccount.balance >= +amount) {
 				newAmount = emmiterAccount.balance - +amount
 			} else {
@@ -118,9 +134,7 @@ export const createTransaction = async (req: Request, res: Response) => {
 		}
 		const { id, createAt, updateAt } = transaction
 		return res.status(201).json({
-			id, transactionType,
-			accountEmmiterIban, emmiterName: emmiterAccount.name, amount, currency: emmiterAccount.currency,
-			accountReciverIban, reciverName: reciverAcount?.name, reciverEmail: reciverAcount?.email,
+			id, transactionType, accountEmmiterIban, amount, currency: emmiterAccount.currency, accountReciverIban,
 			createAt, updateAt
 		})
 	} catch (error) {

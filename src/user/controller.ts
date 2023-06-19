@@ -1,22 +1,22 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { generateToken } from "../common/validator";
 import * as bcrypt from 'bcryptjs'
 import { createUserValidator, loginValidator, updateUserValidator } from "./validator";
+import { decryptToken, generateIban, generateResetToken, generateToken } from "../shared/functions";
+import { tokenDecryptedInterface } from "../common/constantes";
 
 
 const prisma = new PrismaClient()
 
 export const userCreate = async (req: Request, res: Response) => {
-	const { name, email, password } = req.body;
-
-	const isValidate = createUserValidator.validate(req.body).error?.details[0].message;
-	if (isValidate) {
-		return res.status(400).json({ message: isValidate })
-	}
-
 	try {
+		const { name, email, password } = req.body;
+
+		const isValidate = createUserValidator.validate(req.body).error?.details[0].message;
+		if (isValidate) {
+			return res.status(400).json({ message: isValidate })
+		}
 		const passwordHashed = await bcrypt.hash(password, 10)
 		const user = await prisma.user.create({
 			data: {
@@ -26,6 +26,26 @@ export const userCreate = async (req: Request, res: Response) => {
 			}
 		})
 		const token = generateToken({ id: user.id, name: user.name })
+
+		await prisma.user.update(
+			{
+				data: {
+					token: token
+				},
+				where: {
+					id: user.id
+				}
+			}
+		)
+		const iban = generateIban()
+		await prisma.account.create(
+			{
+				data: {
+					iban, balance: 0, currency: "OXF", bic: "DEUIUREI", type: "Courant",
+					User: { connect: { id: user.id } }
+				}
+			}
+		)
 		return res.status(200).json({ name: user.name, email: user.email, token: token });
 	} catch (error) {
 		if (error instanceof PrismaClientKnownRequestError) {
@@ -36,6 +56,43 @@ export const userCreate = async (req: Request, res: Response) => {
 		return res.status(500).json({ message: "server was " })
 	}
 }
+
+export const getUserAccounts = async (req: Request, res: Response) => {
+	try {
+		const authorization = req.headers.authorization
+		if (!authorization || !authorization.startsWith('Bearer ')) {
+			return res.status(400).json({ message: "Faite la requete avec un Bearer token" })
+		}
+		const token = authorization.substring(7)
+		const tokenDecrypted = decryptToken(token) as tokenDecryptedInterface | undefined
+		if (!tokenDecrypted) {
+			return res.status(401).json({ message: "Le token est incorrect" })
+		}
+		const userAccounts = await prisma.account.findUnique({ where: { userId: tokenDecrypted.id } })
+		const userSubAccouns = await prisma.subAccount.findMany(
+			{
+				where: {
+					accountParentIban: userAccounts?.iban
+				}
+			}
+		)
+		return res.status(200).json(
+			{
+				account: {
+					...userAccounts,
+					userId: undefined,
+					createAt: undefined,
+					updateAt: undefined
+				},
+				subAccount: userSubAccouns
+			}
+		)
+	} catch (error) {
+		return res.status(500).json({ message: "Le serveur a craché" })
+	}
+}
+
+
 
 export const login = async (req: Request, res: Response) => {
 	try {

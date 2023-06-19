@@ -1,5 +1,4 @@
 import * as dotenv from 'dotenv'
-import * as jwt from "jsonwebtoken";
 
 dotenv.config()
 
@@ -19,12 +18,6 @@ export function isValidePassword(password: string): boolean {
 
 export function isValideUserData(name: string, email: string, password: string): boolean {
 	return isValideName(name) && isValidEmail(email) && isValidePassword(password);
-}
-
-export function generateToken(userData: object): string {
-	const options = { expiresIn: '1d' };
-	const secretKey = process.env.SECRET_KEY || "";
-	return jwt.sign(userData, secretKey, options);
 }
 
 export function ibanValidator(iban: string): boolean {

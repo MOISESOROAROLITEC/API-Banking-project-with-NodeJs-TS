@@ -1,9 +1,11 @@
 import express = require("express");
-import { createTransaction, getAllTransactions, getOneTransaction } from "./controller";
+import { createTransaction, creditAccount, getAllTransactions, getOneTransaction } from "./controller";
 
 const transactionRoutes = express.Router();
 
-transactionRoutes.post("/do-transaction", createTransaction);
+transactionRoutes.post("/credit", creditAccount);
+transactionRoutes.post("/debit", createTransaction);
+transactionRoutes.post("/transfert", createTransaction);
 transactionRoutes.get("/all", getAllTransactions);
 transactionRoutes.get("/:id", getOneTransaction);
 

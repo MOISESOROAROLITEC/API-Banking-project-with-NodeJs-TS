@@ -1,29 +1,28 @@
 import { Request, Response } from "express";
-import * as iban from "ibannumber-generator";
 import { PrismaClient } from "@prisma/client";
 import * as bcryptjs from 'bcryptjs'
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { ibanValidator } from "../common/validator";
 import { createSubAccouteValidator } from "./validator";
+import { generateIban } from "../shared/functions";
 
 
 const prisma = new PrismaClient();
 
 export const createSubAccount = async (req: Request, res: Response) => {
 	try {
-		const IBAN = iban.buildIban("Ivory_Coast");
+		const IBAN = generateIban()
 		const isValidate = createSubAccouteValidator.validate(
 			{ iban: IBAN, ...req.body }
 		).error?.details[0].message
 		if (isValidate) {
 			return res.status(400).json({ message: isValidate })
 		}
-		const password = await bcryptjs.hash(req.body.password, 10);
-		const { name, number, currency, bic, type, parentAccountIban } = req.body;
+		const { currency, bic, type, parentAccountIban } = req.body;
 		const balance = +req.body.balance
 		const account = await prisma.subAccount.create({
 			data: {
-				iban: IBAN, name, number, balance, currency, bic, type, password,
+				iban: IBAN, balance: balance | 0, currency, bic, type,
 				AccountParent: { connect: { iban: parentAccountIban } }
 			}
 		})
@@ -32,10 +31,10 @@ export const createSubAccount = async (req: Request, res: Response) => {
 		if (error instanceof PrismaClientKnownRequestError) {
 			if (error.code === 'P2002') {
 				const target: string[] = error.meta!['target'] as string[]
-				return res.status(400).json({ message: `Account with this ${target[0]} is already exist` })
+				return res.status(400).json({ message: `Le compte avec ce ${target[0]} existe déjà` })
 			} else if (error.code === 'P2025') {
 				return res.status(400).json(
-					{ message: `no parent Account with iban ${req.body.parentAccountIban}` }
+					{ message: `Aucun compte parent n'a pour IBAN ${req.body.parentAccountIban}` }
 				)
 			}
 		}
@@ -47,7 +46,7 @@ export const getOneSubAccount = async (req: Request, res: Response) => {
 	try {
 		const isValidateIban = ibanValidator(req.params.id)
 		if (!isValidateIban) {
-			return res.status(400).json({ message: "subaccount IBAN format is not correct" })
+			return res.status(400).json({ message: "Le format de l'IBAN du sous compte est incorrect" })
 		}
 		const subAccount = await prisma.subAccount.findUnique({
 			where: {
@@ -55,7 +54,7 @@ export const getOneSubAccount = async (req: Request, res: Response) => {
 			}
 		})
 		if (!subAccount) {
-			return res.status(404).json({ message: "No sub-account matches to this IBAN" })
+			return res.status(404).json({ message: "Ce IBAN ne correspond à aucun sous-compte" })
 		}
 		return res.status(200).json({ subAccount })
 	} catch (error) {
@@ -88,9 +87,14 @@ export const removeSubAccounts = async (req: Request, res: Response) => {
 	try {
 		const { count } = await prisma.subAccount.deleteMany();
 		if (+count === 0) {
-			return res.status(200).json({ massage: `Accounts list is already empty` })
+			return res.status(200).json({ message: `La liste des sous-comptes est déjà vide` })
 		}
-		return res.status(200).json({ massage: `${count} Accounts has been deleted` })
+		return res.status(200).json(
+			{
+				count,
+				message: `${count} ${count > 1 ? "comptes ont" : "compte à"} été supprimé`
+			}
+		)
 	} catch (error) {
 		return res.status(500).json({ message: "server was crashed", error })
 	}

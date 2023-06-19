@@ -7,7 +7,7 @@ export const createUserValidator = Joi.object({
 		.required(),
 
 	email: Joi.string()
-		.email()
+		.email().message("Le format de l'adresse email est invalide")
 		.required(),
 
 	password: Joi.string()

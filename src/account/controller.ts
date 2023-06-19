@@ -22,7 +22,7 @@ export const createAccount = async (req: Request, res: Response) => {
 		if (error instanceof PrismaClientKnownRequestError) {
 			if (error.code === 'P2002') {
 				const target: string[] = error.meta!['target'] as string[]
-				return res.status(400).json({ message: `Account with this ${target[0]} is already exist` })
+				return res.status(400).json({ message: `Le compte avec ce ${target[0]} existe déjà` })
 			}
 		}
 		return res.status(500).json({ message: "server was crashed", error })
@@ -34,7 +34,7 @@ export const getOneAccount = async (req: Request, res: Response) => {
 		const iban = req.params.id.toUpperCase()
 		const isValidateIban = ibanValidator(iban)
 		if (!isValidateIban) {
-			return res.status(400).json({ message: "IBAN format is not correct" })
+			return res.status(400).json({ message: "Le format de l'IBAN est incorrect" })
 		}
 		const account: Account | null = await prisma.account.findUnique({
 			where: {
@@ -42,7 +42,7 @@ export const getOneAccount = async (req: Request, res: Response) => {
 			}
 		})
 		if (!account) {
-			return res.status(404).json({ message: "No account matches this IBAN" })
+			return res.status(404).json({ message: "Ce IBAN ne correspond à aucun compte" })
 		}
 		return res.status(200).json(account)
 	} catch (error) {
@@ -90,10 +90,10 @@ export const changeAccountType = async (req: Request, res: Response) => {
 			}
 			isAccount = false;
 		}
-		const isMatch = await bcryptjs.compare(password, emmiterAccount.password);
-		if (!isMatch) {
-			return res.status(400).json({ message: `password is not correct` })
-		}
+		// const isMatch = await bcryptjs.compare(password, emmiterAccount.password);
+		// if (!isMatch) {
+		// 	return res.status(400).json({ message: `Le mot de passe est incorrect` })
+		// }
 		let emmiterUpdate: Account | SubAccount | null;
 		if (isAccount) {
 			emmiterUpdate = await prisma.account.update({ where: { iban }, data: { type } });
@@ -110,7 +110,7 @@ export const removeOneAccount = async (req: Request, res: Response) => {
 	try {
 		const Account = await prisma.account.delete({ where: { iban: req.params.iban } })
 		if (!Account) {
-			return res.status(404).json({ massage: `Cannot find this account` })
+			return res.status(404).json({ message: `Ce conpte est introuvable` })
 		}
 		return res.status(200).json(Account)
 	} catch (error) {
@@ -122,9 +122,14 @@ export const removeAccounts = async (req: Request, res: Response) => {
 	try {
 		const { count } = await prisma.account.deleteMany();
 		if (count === 0) {
-			return res.status(200).json({ massage: `Accounts list is already empty` })
+			return res.status(200).json({ message: `La liste des conptes est déjà vides` })
 		}
-		return res.status(200).json({ massage: `${count} Accounts has been deleted` })
+		return res.status(200).json(
+			{
+				count,
+				message: `${count} ${count > 1 ? "comptes ont" : "compte à"} été supprimé`
+			}
+		)
 	} catch (error) {
 		return res.status(500).json({ message: "server was crashed", error })
 	}
