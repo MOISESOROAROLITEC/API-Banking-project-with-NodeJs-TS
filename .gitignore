@@ -5,6 +5,8 @@ src/prisma/migrations/
 src/prisma/my*
 type_declarations/
 
+*.sqlite
+
 .env
 package-lock.json
 *.js
