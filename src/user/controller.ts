@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import * as bcrypt from 'bcryptjs'
+
 import { createUserValidator, loginValidator, updateUserValidator } from "./validator";
-import { decryptToken, generateIban, generateResetToken, generateToken } from "../shared/functions";
+import { hashPassword, decryptToken, generateIban, generateResetToken, generateToken, comparePassword } from "../shared/functions";
 import { tokenDecryptedInterface } from "../common/constantes";
 
 
@@ -17,7 +17,7 @@ export const userCreate = async (req: Request, res: Response) => {
 		if (isValidate) {
 			return res.status(400).json({ message: isValidate })
 		}
-		const passwordHashed = await bcrypt.hash(password, 10)
+		const passwordHashed = await hashPassword(password)
 		const user = await prisma.user.create({
 			data: {
 				name: name,
@@ -92,7 +92,52 @@ export const getUserAccounts = async (req: Request, res: Response) => {
 	}
 }
 
+export const verifyEmail = async (req: Request, res: Response) => {
+	try {
+		const { email } = req.body;
+		const user = await prisma.user.findUnique({ where: { email } })
+		if (!user) {
+			return res.status(404).json({ message: "L'email ne correspond à aucun utilisateur" })
+		}
+		const resetToken = generateResetToken(email);
+		return res.status(200).json({ token: resetToken })
+	} catch (error) {
+		return res.status(500).json({ message: "Le serveur a craché" })
+	}
+}
 
+export const changePassword = async (req: Request, res: Response) => {
+	try {
+		const { password } = req.body;
+		const authorization = req.headers.authorization
+		if (!authorization || !authorization.startsWith('Bearer ')) {
+			return res.status(400).json({ message: "Faite la requete avec un Bearer token" })
+		}
+		const token = authorization.substring(7)
+		const tokenDecrypted = decryptToken(token) as string
+		if (!tokenDecrypted) {
+			return res.status(401).json({ message: "Le token est incorrect" })
+		}
+
+		const passwordHashed = await hashPassword(password)
+
+		const user = await prisma.user.update(
+			{
+				where: { email: tokenDecrypted },
+				data: {
+					password: passwordHashed
+				}
+			},
+		)
+		if (!user) {
+			return res.status(404).json({ message: "L'email ne correspond à aucun utilisateur" })
+		}
+		// const resetToken = generateResetToken(email);
+		return res.status(200).json({ message: "Le mot de passe a bien été changé" })
+	} catch (error) {
+		return res.status(500).json({ message: "Le serveur a craché" })
+	}
+}
 
 export const login = async (req: Request, res: Response) => {
 	try {
@@ -105,7 +150,7 @@ export const login = async (req: Request, res: Response) => {
 		if (!user) {
 			return res.status(404).json({ message: "L'email ou le mot de passe est incorrect" });
 		}
-		const isMatch = bcrypt.compareSync(password, user.password);
+		const isMatch = comparePassword(password, user.password);
 		if (!isMatch) {
 			return res.status(404).json({ message: "L'email ou le mot de passe est incorrect" });
 		}
@@ -133,7 +178,7 @@ export const update = async (req: Request, res: Response) => {
 		if (isValidate) {
 			return res.status(400).json({ message: isValidate })
 		}
-		const passwordHashed = password ? bcrypt.hashSync(password) : undefined
+		const passwordHashed = password ? await hashPassword(password) : undefined
 		const user = await prisma.user.update({ where: { email: userEmail }, data: { email, name, password: passwordHashed } })
 		if (!user) {
 			return res.status(404).json({ message: "Cet utilisateur est introuvable" })

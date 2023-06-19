@@ -7,10 +7,10 @@ import transactionRoutes from "./transaction/route";
 import subAccountRoutes from "./subAccount/route";
 
 dotenv.config();
+const PORT = process.env.PORT;
 
 const app = express();
 app.use(express.json());
-const PORT = process.env.PORT;
 
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))

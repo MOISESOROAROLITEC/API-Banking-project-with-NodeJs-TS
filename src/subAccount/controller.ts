@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
-import * as bcryptjs from 'bcryptjs'
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { ibanValidator } from "../common/validator";
 import { createSubAccouteValidator } from "./validator";

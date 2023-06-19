@@ -1,4 +1,5 @@
 import * as jwt from "jsonwebtoken";
+import * as bcrypt from 'bcryptjs'
 
 
 export function generateIban(): string {
@@ -18,7 +19,7 @@ export function generateToken(userData: object): string {
 }
 
 export function generateResetToken(email: string): string {
-	// const options = { expiresIn: '1d' };
+	const options = { expiresIn: '1d' };
 	const secretKey = process.env.SECRET_KEY || "";
 	return jwt.sign(email, secretKey);
 }
@@ -34,6 +35,12 @@ export function decryptToken(token: string): string | jwt.JwtPayload | undefined
 	} catch (error) {
 		undefined
 	}
+}
 
+export function hashPassword(password: string): Promise<string> {
+	return bcrypt.hash(password, 10)
+}
 
+export function comparePassword(password: string, hash: string): boolean {
+	return bcrypt.compareSync(password, hash)
 }

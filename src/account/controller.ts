@@ -3,7 +3,6 @@ import { createAccouteValidator, changeAccountTypeValidator } from "./validator"
 import { Account, PrismaClient, SubAccount } from "@prisma/client";
 import * as Iban from "ibannumber-generator";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import * as bcryptjs from 'bcryptjs'
 import { ibanValidator } from "../common/validator";
 
 const prisma = new PrismaClient();
@@ -15,7 +14,7 @@ export const createAccount = async (req: Request, res: Response) => {
 		if (isValidate) {
 			return res.status(400).json({ message: isValidate })
 		}
-		req.body.password = await bcryptjs.hash(req.body.password, 10);
+		req.body.password = await (req.body.password, 10);
 		const account: Account = await prisma.account.create({ data: { iban: IBAN, ...req.body } })
 		return (res.status(201).json(account))
 	} catch (error) {
@@ -90,10 +89,6 @@ export const changeAccountType = async (req: Request, res: Response) => {
 			}
 			isAccount = false;
 		}
-		// const isMatch = await bcryptjs.compare(password, emmiterAccount.password);
-		// if (!isMatch) {
-		// 	return res.status(400).json({ message: `Le mot de passe est incorrect` })
-		// }
 		let emmiterUpdate: Account | SubAccount | null;
 		if (isAccount) {
 			emmiterUpdate = await prisma.account.update({ where: { iban }, data: { type } });

@@ -8,40 +8,37 @@ datasource db {
 }
 
 model User {
-  id       Int    @id @default(autoincrement())
+  id       Int      @id @default(autoincrement())
   name     String
-  email    String @unique
+  email    String   @unique
   password String
+  token    String?
+  Account  Account?
 }
 
 model Account {
   iban        String        @id @unique
-  name        String
-  number      String        @unique
-  email       String        @unique
-  password    String
   balance     Float
   currency    String
   bic         String
-  type        String        @default("epargne")
+  type        String        @default("current")
   createAt    DateTime      @default(now())
   updateAt    DateTime      @updatedAt
   transaction Transaction[]
   SubAccount  SubAccount[]
+  User        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      Int           @unique
 }
 
 model SubAccount {
   iban              String        @id @unique
-  name              String
-  number            String        @unique
-  password          String
   balance           Float
   currency          String
   bic               String
-  type              String        @default("epargne")
+  type              String        @default("current")
   createAt          DateTime      @default(now())
   updateAt          DateTime      @updatedAt
-  AccountParent     Account?      @relation(fields: [accountParentIban], references: [iban])
+  AccountParent     Account?      @relation(fields: [accountParentIban], references: [iban], onDelete: Cascade)
   accountParentIban String?
   Transaction       Transaction[]
 }
@@ -53,8 +50,8 @@ model Transaction {
   accountReciver     String
   createAt           DateTime    @default(now())
   updateAt           DateTime    @updatedAt
-  AccountEmmiter     Account?    @relation(fields: [accountEmmiterIban], references: [iban])
+  AccountEmmiter     Account?    @relation(fields: [accountEmmiterIban], references: [iban], onDelete: Cascade)
   accountEmmiterIban String?
-  SubAccountEmmiter  SubAccount? @relation(fields: [subAccountIban], references: [iban])
+  SubAccountEmmiter  SubAccount? @relation(fields: [subAccountIban], references: [iban], onDelete: Cascade)
   subAccountIban     String?
 }
