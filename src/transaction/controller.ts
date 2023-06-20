@@ -1,9 +1,11 @@
 import { Request, Response } from "express";
 import { Account, PrismaClient, SubAccount, Transaction } from "@prisma/client";
 import { depositValidator, transferValidator, withdrawalValidator } from "./validator";
-import { availableTransactionTypes } from "../common/constantes";
+import { availableTransactionTypes, tokenDecryptedInterface } from "../common/constantes";
 import Joi = require("joi");
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { decryptToken } from "../shared/functions";
+import { getUserByToken } from "../user/controller";
 const prisma = new PrismaClient();
 
 function isTypeValide(type: string): boolean {
@@ -22,6 +24,10 @@ function getTransactionValidationType(transactionType: string): Joi.ObjectSchema
 
 export const creditAccount = async (req: Request, res: Response) => {
 	try {
+		const { status, message, user } = await getUserByToken(req, res)
+		if (status !== 200 || !user) {
+			return res.status(status).json({ message })
+		}
 		const { iban, amount } = req.body
 		let accoutToCredit: Account | SubAccount | null = await prisma.account.findUnique({ where: { iban: iban } })
 		if (!accoutToCredit?.iban) {
@@ -34,6 +40,13 @@ export const creditAccount = async (req: Request, res: Response) => {
 		} else {
 			accoutToCredit = await prisma.account.update({ where: { iban: iban }, data: { balance: accoutToCredit.balance + +amount } })
 		}
+		await prisma.transaction.create({
+			data: {
+				amount: amount,
+				transactionType: "credit",
+				accountReciver: iban
+			}
+		})
 		return res.status(200).json(accoutToCredit)
 	} catch (error) {
 		return res.status(500).json({ massage: "Server was crached" })
@@ -43,7 +56,7 @@ export const createTransaction = async (req: Request, res: Response) => {
 	try {
 		if (!isTypeValide(req.body.transactionType)) {
 			return res.status(400).json({
-				message: `Le type de la transaction est incorrect. les types acceptés sont : ${[...availableTransactionTypes]}`
+				message: `Le type de la transaction 'transactionType' est incorrect. les types acceptés sont : ${[...availableTransactionTypes]}`
 			})
 		}
 
@@ -77,11 +90,14 @@ export const createTransaction = async (req: Request, res: Response) => {
 				newAmount = emmiterAccount.balance - +amount
 			} else {
 				return res.status(400).json({
-					message: `the amount entered is greater than the amount in the account. The amount available is ${emmiterAccount.balance}`
+					message: `Le montant saisi est supérieur au montant disponible sur le compte. Le montant disponible est de  ${emmiterAccount.balance}`
 				});
 			}
 			if (!(transactionType === "debit")) {
 				reciverAcount = await prisma.account.findUnique({ where: { iban: accountReciverIban } });
+				if (!reciverAcount) {
+					reciverAcount = await prisma.subAccount.findUnique({ where: { iban: accountReciverIban } });
+				}
 				if (!reciverAcount) {
 					return res.status(400).json({
 						message: `not reciver account with IBAN : ${accountReciverIban}`
@@ -125,7 +141,7 @@ export const createTransaction = async (req: Request, res: Response) => {
 				data: {
 					transactionType,
 					accountReciver: accountReciverIban,
-					amount,
+					amount: +amount,
 					SubAccountEmmiter: {
 						connect: { iban: accountEmmiterIban }
 					}
@@ -138,6 +154,7 @@ export const createTransaction = async (req: Request, res: Response) => {
 			createAt, updateAt
 		})
 	} catch (error) {
+		console.log(error);
 		return res.status(500).json({ message: "server was crashed", error })
 	}
 }
@@ -158,6 +175,74 @@ export const getOneTransaction = async (req: Request, res: Response) => {
 	}
 }
 
+export const getUserTransactions = async (req: Request, res: Response) => {
+	try {
+		const { status, message, user } = await getUserByToken(req, res)
+		if (status !== 200 || !user) {
+			return res.status(status).json({ message })
+		}
+		const userAccounts = await prisma.account.findUnique(
+			{
+				select: { iban: true },
+				where: { userId: user.id }
+			}
+		)
+		const userSubAccouns = await prisma.subAccount.findMany(
+			{
+				select: { iban: true },
+				where: { accountParentIban: userAccounts?.iban }
+			}
+		)
+
+		const userSubAccounsIBAN = userSubAccouns.map(({ iban }) => iban)
+		const accounttrans = await prisma.transaction.findMany({
+			where: {
+				OR: [
+					{ accountEmmiterIban: userAccounts?.iban },
+					{
+						subAccountIban: {
+							in: userSubAccounsIBAN
+						}
+					}
+				]
+			}
+		})
+
+		let transactions: any[] = []
+
+		for (const trans of accounttrans) {
+			const reciver = await prisma.user.findFirst(
+				{
+					where: {
+						Account: {
+							OR: [
+								{
+									iban: trans.accountReciver
+								},
+								{
+									SubAccount: {
+										every: {
+											iban: trans.accountReciver
+										}
+									}
+								}
+							]
+						}
+					},
+					select: {
+						id: true,
+						email: true,
+						name: true
+					}
+				}
+			)
+			transactions.push({ ...trans, reciver })
+		}
+		return res.status(200).json(transactions)
+	} catch (error) {
+		return res.status(500).json({ message: "Le serveur a crashé", error })
+	}
+}
 export const getAllTransactions = async (req: Request, res: Response) => {
 	const take = Number(req.query.limit) || undefined;
 	const skip = Number(req.query.page) || undefined;

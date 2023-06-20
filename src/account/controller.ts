@@ -4,6 +4,9 @@ import { Account, PrismaClient, SubAccount } from "@prisma/client";
 import * as Iban from "ibannumber-generator";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { ibanValidator } from "../common/validator";
+import { decryptToken } from "../shared/functions";
+import { tokenDecryptedInterface } from "../common/constantes";
+import { getUserByToken } from "../user/controller";
 
 const prisma = new PrismaClient();
 
@@ -66,6 +69,36 @@ export const getAccounts = async (req: Request, res: Response) => {
 		})
 	} catch (error) {
 		return res.status(500).json({ message: "server was crashed", error })
+	}
+}
+
+export const getUserAccounts = async (req: Request, res: Response) => {
+	try {
+		const { status, message, user } = await getUserByToken(req, res)
+		if (status !== 200 || !user) {
+			return res.status(status).json({ message })
+		}
+		const userAccounts = await prisma.account.findUnique({ where: { userId: user.id } })
+		const userSubAccouns = await prisma.subAccount.findMany(
+			{
+				where: {
+					accountParentIban: userAccounts?.iban
+				}
+			}
+		)
+		return res.status(200).json(
+			{
+				account: {
+					...userAccounts,
+					userId: undefined,
+					createAt: undefined,
+					updateAt: undefined
+				},
+				subAccount: userSubAccouns
+			}
+		)
+	} catch (error) {
+		return res.status(500).json({ message: "Le serveur a craché" })
 	}
 }
 

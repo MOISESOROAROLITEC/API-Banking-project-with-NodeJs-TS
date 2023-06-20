@@ -35,16 +35,8 @@ export const depositValidator = Joi.object({
 
 export const transferValidator = Joi.object({
 	accountEmmiterIban: Joi.string()
-		.pattern(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{4}[0-9]{7}([A-Z0-9]{0,15})?$/)
-		.message("emmiter Iban is nont correct")
 		.required(),
 	accountReciver: Joi.string()
-		.pattern(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{4}[0-9]{7}([A-Z0-9]{0,15})?$/)
-		.message("reciver Iban is nont correct")
-		.required(),
-	accountPassword: Joi.string()
-		.min(8)
-		.max(50)
 		.required(),
 	amount: Joi.number()
 		.min(1)
