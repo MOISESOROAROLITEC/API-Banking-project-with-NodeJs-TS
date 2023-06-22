@@ -7,7 +7,7 @@ export const createAccouteValidator = Joi.object({
 		.required(),
 	currency: Joi.string()
 		.pattern(/^(OXF|EUR|USD|GBP|JPY|CHF|AUD|CAD|CNY|INR|NZD)$/)
-		.message("allow currency : 'OXF', 'EUR', 'USD', 'GBP', 'JPY', 'CHF', 'AUD', 'CAD', 'CNY', 'INR', 'NZD'")
+		.message("les devises autorise sont: 'OXF', 'EUR', 'USD', 'GBP', 'JPY', 'CHF', 'AUD', 'CAD', 'CNY', 'INR', 'NZD'")
 		.required(),
 	bic: Joi.string()
 		.pattern(/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/)

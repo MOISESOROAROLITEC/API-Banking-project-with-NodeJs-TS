@@ -1,6 +1,5 @@
 import Joi = require("joi");
 import * as iban from "iban-ts";
-import { ibanValidator } from "../common/validator";
 
 export const withdrawalValidator = Joi.object({
 	accountEmmiterIban: Joi.string()

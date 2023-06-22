@@ -14,6 +14,12 @@ export const createUserValidator = Joi.object({
 		.min(7).message("password length must be longer than 7 characters")
 		.max(50).message("password length can not be longer than 50 characters")
 		.required(),
+
+	role: Joi.string()
+		.pattern(/^(user|admin)$/)
+		.message("Les roles valide sont : 'user', 'admin'")
+		.required()
+		.default("user")
 })
 
 export const loginValidator = Joi.object({

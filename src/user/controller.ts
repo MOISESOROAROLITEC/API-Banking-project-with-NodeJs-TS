@@ -9,7 +9,7 @@ const prisma = new PrismaClient()
 
 export const userCreate = async (req: Request, res: Response) => {
 	try {
-		const { name, email, password } = req.body;
+		const { name, email, password, role } = req.body;
 
 		const isValidate = createUserValidator.validate(req.body).error?.details[0].message;
 		if (isValidate) {
@@ -19,6 +19,7 @@ export const userCreate = async (req: Request, res: Response) => {
 		const user = await prisma.user.create({
 			data: {
 				name: name,
+				role: role,
 				email: email,
 				password: passwordHashed
 			}
@@ -81,6 +82,7 @@ export const changePassword = async (req: Request, res: Response) => {
 		if (!user) {
 			return res.status(404).json({ message: "L'email ne correspond à aucun utilisateur" })
 		}
+		// const resetToken = generateResetToken(email);
 		return res.status(200).json({ message: "Le mot de passe a bien été changé" })
 	} catch (error) {
 		return res.status(500).json({ message: "Le serveur a craché" })
@@ -103,7 +105,7 @@ export const login = async (req: Request, res: Response) => {
 			return res.status(404).json({ message: "L'email ou le mot de passe est incorrect" });
 		}
 		const token = generateToken({ id: user.id, name: user.name })
-		return res.status(200).json({ name: user.name, email: user.email, token });
+		return res.status(200).json({ name: user.name, email: user.email, role: user.role, token });
 
 	} catch (error) {
 		return res.status(500).json({ message: "server was crashed", error });
@@ -113,7 +115,7 @@ export const userList = async (req: Request, res: Response) => {
 	const take = Number(req.query.limit) || undefined;
 	const skip = Number(req.query.page) || undefined;
 
-	const users = await prisma.user.findMany({ select: { name: true, email: true }, take, skip })
+	const users = await prisma.user.findMany({ select: { name: true, email: true, role: true }, take, skip })
 
 	return res.status(200).json({
 		users
