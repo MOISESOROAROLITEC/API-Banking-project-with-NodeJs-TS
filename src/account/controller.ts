@@ -4,9 +4,7 @@ import { Account, PrismaClient, SubAccount } from "@prisma/client";
 import * as Iban from "ibannumber-generator";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { ibanValidator } from "../common/validator";
-import { decryptToken } from "../shared/functions";
-import { tokenDecryptedInterface } from "../common/constantes";
-import { getUserByToken } from "../user/controller";
+import { getUserByToken } from "../shared/functions";
 
 const prisma = new PrismaClient();
 
@@ -57,16 +55,7 @@ export const getAccounts = async (req: Request, res: Response) => {
 	const skip = Number(req.query.page) || undefined;
 	try {
 		const accounts: Account[] = await prisma.account.findMany({ take, skip });
-		if (accounts.length === 0) {
-			return res.status(200).json(accounts)
-		}
-		const totalRecords: number = await prisma.account.count();
-		const totalPages: number = take ? Math.ceil(totalRecords / take) : 1;
-		const currentPage = skip ? skip : 1;
-
-		return res.status(200).json({
-			totalRecords, totalPages, currentPage, accounts
-		})
+		return res.status(200).json(accounts)
 	} catch (error) {
 		return res.status(500).json({ message: "server was crashed", error })
 	}
@@ -104,11 +93,15 @@ export const getUserAccounts = async (req: Request, res: Response) => {
 
 export const changeAccountType = async (req: Request, res: Response) => {
 	try {
+		const { status, message, user } = await getUserByToken(req, res)
+		if (status !== 200 || !user) {
+			return res.status(status).json({ message })
+		}
+
 		const iban = req.body.iban;
 		const type = req.body.newType;
-		const password = req.body.password;
 
-		const isValidate = changeAccountTypeValidator.validate({ iban, newType: type, password }).error?.details[0].message
+		const isValidate = changeAccountTypeValidator.validate({ iban, newType: type }).error?.details[0].message
 		if (isValidate) {
 			return res.status(400).json({ message: isValidate })
 		}
@@ -118,7 +111,7 @@ export const changeAccountType = async (req: Request, res: Response) => {
 		if (!emmiterAccount) {
 			emmiterAccount = await prisma.subAccount.findUnique({ where: { iban } })
 			if (!emmiterAccount) {
-				return res.status(404).json({ message: `not account with IBAN : ${iban}` })
+				return res.status(404).json({ message: `Aucun compte n'a ce IBAN : ${iban}` })
 			}
 			isAccount = false;
 		}

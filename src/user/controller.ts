@@ -3,9 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
 import { createUserValidator, loginValidator, updateUserValidator } from "./validator";
-import { hashPassword, decryptToken, generateIban, generateResetToken, generateToken, comparePassword } from "../shared/functions";
-import { GetUserByToken, tokenDecryptedInterface } from "../common/constantes";
-
+import { hashPassword, decryptToken, generateIban, generateToken, comparePassword } from "../shared/functions";
 
 const prisma = new PrismaClient()
 
@@ -57,20 +55,6 @@ export const userCreate = async (req: Request, res: Response) => {
 	}
 }
 
-export const verifyEmail = async (req: Request, res: Response) => {
-	try {
-		const { email } = req.body;
-		const user = await prisma.user.findUnique({ where: { email } })
-		if (!user) {
-			return res.status(404).json({ message: "L'email ne correspond à aucun utilisateur" })
-		}
-		const resetToken = generateResetToken(email);
-		return res.status(200).json({ token: resetToken })
-	} catch (error) {
-		return res.status(500).json({ message: "Le serveur a craché" })
-	}
-}
-
 export const changePassword = async (req: Request, res: Response) => {
 	try {
 		const { password } = req.body;
@@ -97,28 +81,9 @@ export const changePassword = async (req: Request, res: Response) => {
 		if (!user) {
 			return res.status(404).json({ message: "L'email ne correspond à aucun utilisateur" })
 		}
-		// const resetToken = generateResetToken(email);
 		return res.status(200).json({ message: "Le mot de passe a bien été changé" })
 	} catch (error) {
 		return res.status(500).json({ message: "Le serveur a craché" })
-	}
-}
-
-export const getUserByToken = async (req: Request, res: Response): Promise<GetUserByToken> => {
-	try {
-		const authorization = req.headers.authorization
-		if (!authorization || !authorization.startsWith('Bearer ')) {
-			return { status: 400, message: "Faite la requete avec un Bearer token" }
-		}
-		const token = authorization.substring(7)
-		const tokenDecrypted = decryptToken(token) as tokenDecryptedInterface | undefined
-		if (!tokenDecrypted) {
-			return { status: 401, message: "Le token est incorrect" }
-		}
-		const user = await prisma.user.findUnique({ where: { id: tokenDecrypted.id } })
-		return { status: 200, message: "ok", user }
-	} catch (error) {
-		return { status: 500, message: "Le serveur a craché" }
 	}
 }
 

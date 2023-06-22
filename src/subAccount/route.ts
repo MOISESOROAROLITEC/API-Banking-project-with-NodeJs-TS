@@ -5,7 +5,7 @@ const subAccountRoutes = express.Router();
 
 subAccountRoutes.post("/create", createSubAccount);
 subAccountRoutes.delete("/remove-all", removeSubAccounts)
-subAccountRoutes.get("/accounts", getSubAccounts);
+subAccountRoutes.get("/sub-accounts", getSubAccounts);
 subAccountRoutes.get("/:id", getOneSubAccount);
 
 

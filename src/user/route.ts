@@ -1,11 +1,11 @@
 const express = require('express')
+import { verifyEmail } from '../shared/functions';
 import {
 	login,
 	removeUsers,
 	update,
 	userCreate,
 	userList,
-	verifyEmail,
 	changePassword,
 } from './controller'
 

@@ -50,6 +50,7 @@ model Transaction {
   accountReciver     String
   createAt           DateTime    @default(now())
   updateAt           DateTime    @updatedAt
+  status             String      @default("En cours de traitement")
   AccountEmmiter     Account?    @relation(fields: [accountEmmiterIban], references: [iban], onDelete: Cascade)
   accountEmmiterIban String?
   SubAccountEmmiter  SubAccount? @relation(fields: [subAccountIban], references: [iban], onDelete: Cascade)

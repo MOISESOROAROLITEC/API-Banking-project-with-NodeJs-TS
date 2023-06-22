@@ -4,8 +4,7 @@ import { depositValidator, transferValidator, withdrawalValidator } from "./vali
 import { availableTransactionTypes, tokenDecryptedInterface } from "../common/constantes";
 import Joi = require("joi");
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { decryptToken } from "../shared/functions";
-import { getUserByToken } from "../user/controller";
+import { getUserByToken } from "../shared/functions";
 const prisma = new PrismaClient();
 
 function isTypeValide(type: string): boolean {
@@ -59,7 +58,6 @@ export const createTransaction = async (req: Request, res: Response) => {
 				message: `Le type de la transaction 'transactionType' est incorrect. les types acceptés sont : ${[...availableTransactionTypes]}`
 			})
 		}
-
 		const { accountEmmiterIban, amount, transactionType } = req.body;
 		const accountReciverIban: string = transactionType != "transfer" ? "null" : req.body.accountReciver;
 		var transactionTypeValidator = getTransactionValidationType(transactionType)
@@ -74,10 +72,17 @@ export const createTransaction = async (req: Request, res: Response) => {
 		if (!emmiterAccount) {
 			return res.status(404).json({ message: `Aucun compte n'a ce IBAN : ${accountEmmiterIban}` })
 		}
-		if (emmiterAccount.type === "blocked" && transactionType !== "credit") {
+		if (emmiterAccount.type === "Bloqué" && transactionType !== "credit") {
 			return res.status(400).json(
 				{
 					message: `Il est impossible de faire un retrait ou un trensfert à partie d'un compte blocké.`
+				}
+			)
+		}
+		if (accountEmmiterIban == accountReciverIban) {
+			return res.status(400).json(
+				{
+					message: `Impossible de faire des transactions sur un même compte`
 				}
 			)
 		}
@@ -100,22 +105,31 @@ export const createTransaction = async (req: Request, res: Response) => {
 				}
 				if (!reciverAcount) {
 					return res.status(400).json({
-						message: `not reciver account with IBAN : ${accountReciverIban}`
+						message: `Aucun compte de reception n'a ce IBAN : ${accountReciverIban}`
 					})
 				} else {
 					const updateAmount: number = reciverAcount.balance + +amount
-					await prisma.account.update({
-						where: { iban: accountReciverIban }, data: { balance: updateAmount }
-					});
+					try {
+						await prisma.account.update({
+							where: { iban: accountReciverIban }, data: { balance: updateAmount }
+						});
+					} catch (error) {
+						await prisma.subAccount.update({
+							where: { iban: accountReciverIban },
+							data: { balance: updateAmount }
+						})
+					}
 				}
 			}
 		} else {
 			newAmount = emmiterAccount.balance + +amount;
 		}
 		try {
-			await prisma.account.update({
-				where: { iban: emmiterAccount.iban }, data: { balance: newAmount }
-			});
+			await prisma.account.update(
+				{
+					where: { iban: emmiterAccount.iban }, data: { balance: newAmount }
+				}
+			);
 		} catch (error) {
 			if (error instanceof PrismaClientKnownRequestError) {
 				if (error.code === 'P2025') {
@@ -130,7 +144,7 @@ export const createTransaction = async (req: Request, res: Response) => {
 				data: {
 					transactionType,
 					accountReciver: accountReciverIban,
-					amount,
+					amount: +amount,
 					AccountEmmiter: {
 						connect: { iban: accountEmmiterIban }
 					}
@@ -154,7 +168,6 @@ export const createTransaction = async (req: Request, res: Response) => {
 			createAt, updateAt
 		})
 	} catch (error) {
-		console.log(error);
 		return res.status(500).json({ message: "server was crashed", error })
 	}
 }
@@ -221,7 +234,7 @@ export const getUserTransactions = async (req: Request, res: Response) => {
 								},
 								{
 									SubAccount: {
-										every: {
+										some: {
 											iban: trans.accountReciver
 										}
 									}
@@ -236,6 +249,9 @@ export const getUserTransactions = async (req: Request, res: Response) => {
 					}
 				}
 			)
+			if (trans.accountEmmiterIban) {
+				trans.subAccountIban = trans.accountEmmiterIban
+			}
 			transactions.push({ ...trans, reciver })
 		}
 		return res.status(200).json(transactions)

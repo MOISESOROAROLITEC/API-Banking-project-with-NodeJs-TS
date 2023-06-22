@@ -22,8 +22,6 @@ export const createAccouteValidator = Joi.object({
 export const changeAccountTypeValidator = Joi.object({
 	iban: Joi.string()
 		.required(),
-	password: Joi.string()
-		.required(),
 	newType: Joi.string()
 		.pattern(/^(Epargne|Bloqué|Courant)$/)
 		.message("allow type : 'Epargne', 'Bloqué', 'Courant'")

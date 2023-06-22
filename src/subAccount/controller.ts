@@ -65,18 +65,7 @@ export const getSubAccounts = async (req: Request, res: Response) => {
 	const take = Number(req.query.limit) || undefined;
 	const skip = Number(req.query.page) || undefined;
 	try {
-		const accounts = await prisma.account.findMany({ take, skip });
-		if (!accounts) {
-			return res.status(200).json({ accounts })
-		}
 
-		const totalRecords: number = await prisma.account.count();
-		const totalPages: number = take ? Math.ceil(totalRecords / take) : 1;
-		const currentPage = skip ? skip : 1;
-
-		return res.status(200).json({
-			totalRecords, totalPages, currentPage, accounts
-		})
 	} catch (error) {
 		return res.status(500).json({ message: "server was crashed", error })
 	}
