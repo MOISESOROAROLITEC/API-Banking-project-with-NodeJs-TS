@@ -59,7 +59,7 @@ export const createTransaction = async (req: Request, res: Response) => {
 			})
 		}
 		const { accountEmmiterIban, amount, transactionType } = req.body;
-		const accountReciverIban: string = transactionType != "transfer" ? "null" : req.body.accountReciver;
+		const accountReciverIban: string = transactionType != "transfert" ? "null" : req.body.accountReciver;
 		var transactionTypeValidator = getTransactionValidationType(transactionType)
 		const isValidate = transactionTypeValidator.validate(req.body).error?.details[0].message
 		if (isValidate) {
@@ -188,6 +188,36 @@ export const getOneTransaction = async (req: Request, res: Response) => {
 	}
 }
 
+export const changeStatus = async (req: Request, res: Response) => {
+	const { id, newStatus }: { id: number, newStatus: string } = req.body
+	try {
+		const { status, message, user } = await getUserByToken(req, res)
+		if (status !== 200 || !user) {
+			return res.status(status).json({ message })
+		}
+		if (user.role != 'admin') {
+			return res.status(400).json({ message: "Seul les administrateur peuvent changer l'etat d'une transaction" })
+		}
+		if (newStatus !== "Accepté" && newStatus !== "Rejeté") {
+			return res.status(400).json({ message: "Le status 'newStatus' est invalide, entrez : Accepté ou Rejeté " })
+		}
+		if (!id) {
+			return res.status(400).json({ message: "L'identifiant 'id' de la transaction est requis" })
+		}
+
+		const transaction = await prisma.transaction.update({
+			where: { id: +id },
+			data: { status: newStatus }
+		});
+		return res.status(200).json(transaction);
+	} catch (error) {
+		if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+			return res.status(404).json({ message: `Aucune transaction ne correspond à ce identifiant : ${id}` })
+		}
+		return res.status(500).json({ message: "server was crashed", error })
+	}
+}
+
 export const getUserTransactions = async (req: Request, res: Response) => {
 	try {
 		const { status, message, user } = await getUserByToken(req, res)
@@ -264,7 +294,13 @@ export const getAllTransactions = async (req: Request, res: Response) => {
 	const skip = Number(req.query.page) || undefined;
 	try {
 
-		const transaction = await prisma.transaction.findMany({ take, skip });
+		const transaction = await prisma.transaction.findMany(
+			{
+				where: { transactionType: "transfert" },
+				take,
+				skip
+			}
+		);
 		if (!transaction) {
 			return res.status(200).json({ message: `nothing found`, transaction })
 		}

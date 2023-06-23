@@ -2,7 +2,9 @@
 export type User = {
 	name: string
 	email: string
-	password: string
+	password: string,
+	role: string,
+	token?: string | null
 	id?: number
 }
 

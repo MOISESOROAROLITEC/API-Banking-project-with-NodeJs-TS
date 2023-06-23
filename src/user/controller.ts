@@ -82,7 +82,6 @@ export const changePassword = async (req: Request, res: Response) => {
 		if (!user) {
 			return res.status(404).json({ message: "L'email ne correspond à aucun utilisateur" })
 		}
-		// const resetToken = generateResetToken(email);
 		return res.status(200).json({ message: "Le mot de passe a bien été changé" })
 	} catch (error) {
 		return res.status(500).json({ message: "Le serveur a craché" })

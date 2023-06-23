@@ -47,7 +47,7 @@ model SubAccount {
 model Transaction {
   id                 Int         @id @default(autoincrement())
   amount             Float
-  transactionType    String
+  transactionType    String      @default("transfert")
   accountReciver     String
   createAt           DateTime    @default(now())
   updateAt           DateTime    @updatedAt

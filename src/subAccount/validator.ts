@@ -5,8 +5,8 @@ export const createSubAccouteValidator = Joi.object({
 		.required(),
 	balance: Joi.number(),
 	currency: Joi.string()
-		.pattern(/^(OXF|EUR|USD|GBP|JPY|CHF|AUD|CAD|CNY|INR|NZD)$/)
-		.message("allow currency : 'OXF', 'EUR', 'USD', 'GBP', 'JPY', 'CHF', 'AUD', 'CAD', 'CNY', 'INR', 'NZD'")
+		.pattern(/^(OFX|EUR|USD|GBP|JPY|CHF|AUD|CAD|CNY|INR|NZD)$/)
+		.message("allow currency : 'OFX', 'EUR', 'USD', 'GBP', 'JPY', 'CHF', 'AUD', 'CAD', 'CNY', 'INR', 'NZD'")
 		.required()
 		.default("OXF"),
 	bic: Joi.string()

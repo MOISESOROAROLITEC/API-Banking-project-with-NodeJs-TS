@@ -1,6 +1,6 @@
 import { User } from "./types";
 
-export const availableTransactionTypes: string[] = ["debit", "credit", "transfer"];
+export const availableTransactionTypes: string[] = ["debit", "credit", "transfert"];
 
 export interface tokenDecryptedInterface {
 	id: number;
