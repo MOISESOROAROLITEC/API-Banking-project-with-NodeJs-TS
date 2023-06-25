@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, User } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
 import { createUserValidator, loginValidator, updateUserValidator } from "./validator";
-import { hashPassword, decryptToken, generateIban, generateToken, comparePassword } from "../shared/functions";
+import { hashPassword, decryptToken, generateIban, generateToken, comparePassword, getUserByToken } from "../shared/functions";
 
 const prisma = new PrismaClient()
 
@@ -122,18 +122,52 @@ export const userList = async (req: Request, res: Response) => {
 }
 export const update = async (req: Request, res: Response) => {
 	try {
-		const { userEmail, name, password, email } = req.body
+		const { status, message, user } = await getUserByToken(req, res)
+		if (status !== 200 || !user) {
+			return res.status(status).json({ message })
+		}
+		const { name, email, oldPassword, newPassword, confirmPassword } = req.body
 		const isValidate = updateUserValidator.validate(req.body).error?.details[0].message;
 		if (isValidate) {
 			return res.status(400).json({ message: isValidate })
 		}
-		const passwordHashed = password ? await hashPassword(password) : undefined
-		const user = await prisma.user.update({ where: { email: userEmail }, data: { email, name, password: passwordHashed } })
-		if (!user) {
+		let passwordHashed = undefined
+		if (oldPassword && newPassword && confirmPassword) {
+			if (newPassword != confirmPassword) {
+				return res.status(400).json({ message: "Le nouveau mot de passe ne correspond pas au mot de pass de confirmation" })
+			}
+			const oldPasswordMatchWithHash = comparePassword(oldPassword, user.password)
+			if (!oldPasswordMatchWithHash) {
+				return res.status(400).json({ message: "L'ancien mot de passe ne correspond pas !" })
+			}
+			passwordHashed = await hashPassword(newPassword)
+		}
+		const newUser = await prisma.user.update({ where: { email: user.email }, data: { email, name, password: passwordHashed } })
+		if (!newUser) {
 			return res.status(404).json({ message: "Cet utilisateur est introuvable" })
 		}
-		const token = generateToken({ id: user.id, name: user.name })
-		return res.status(200).json({ token })
+		const token = generateToken({ id: newUser.id, name: newUser.name })
+		return res.status(200).json({ token, name: newUser.name, email: newUser.email, role: user.role })
+	} catch (error) {
+		if (error instanceof PrismaClientKnownRequestError) {
+			if (error.code === "P2025") {
+				return res.status(404).json({ message: "Cet utilisateur est introuvable dans la base de données" })
+			} else if (error.code === 'P2002') {
+				const target: string[] = error.meta!['target'] as string[]
+				return res.status(400).json({ message: `Un compte avec ce ${target[0]} existe déjà` })
+			}
+		}
+		return res.status(500).json({ message: "server was crashed", error })
+	}
+}
+
+export const getUserInformations = async (req: Request, res: Response) => {
+	try {
+		const { status, message, user } = await getUserByToken(req, res);
+		if (status !== 200 || !user) {
+			return res.status(status).json({ message })
+		}
+		return res.status(200).json({ ...user, password: undefined, id: undefined })
 	} catch (error) {
 		if (error instanceof PrismaClientKnownRequestError) {
 			if (error.code === "P2025") {

@@ -33,14 +33,15 @@ export const loginValidator = Joi.object({
 })
 
 export const updateUserValidator = Joi.object({
-	userEmail: Joi.string()
-		.email()
-		.required(),
 	name: Joi.string()
-		.min(3).message("name length must be longer than 2 characters")
-		.max(30).message("name length can not be longer than 30 characters"),
+		.min(3).message("Le nom doit contenire plus de 2 caractères")
+		.max(50).message("Le nom doit contenire moin de 50 caractères"),
 	email: Joi.string()
 		.email(),
-	password: Joi.string()
+	oldPassword: Joi.string()
+		.min(8).max(80),
+	newPassword: Joi.string()
+		.min(8).max(80),
+	confirmPassword: Joi.string()
 		.min(8).max(80)
 })

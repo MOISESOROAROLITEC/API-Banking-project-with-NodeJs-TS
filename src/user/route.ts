@@ -7,6 +7,7 @@ import {
 	userCreate,
 	userList,
 	changePassword,
+	getUserInformations,
 } from './controller'
 
 const userRoutes = express.Router()
@@ -16,6 +17,7 @@ userRoutes.post('/auth/login', login);
 userRoutes.post('/user/reset-password/verify-email', verifyEmail);
 userRoutes.post('/user/reset-password/new-password', changePassword);
 userRoutes.get('/users', userList);
+userRoutes.get('/user/informations', getUserInformations);
 userRoutes.delete('/users', removeUsers);
 userRoutes.patch('/user/update', update);
 

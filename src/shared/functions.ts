@@ -30,10 +30,8 @@ export function generateResetToken(email: string): string {
 
 export function decryptToken(token: string): string | jwt.JwtPayload | undefined {
 
-	const secretKey = process.env.SECRET_KEY;
-	if (!secretKey) {
-		return undefined
-	}
+	const secretKey = process.env.SECRET_KEY || "je suis la clée privée par defaut qu'il faut absolument changer";
+
 	try {
 		return jwt.verify(token, secretKey)
 	} catch (error) {

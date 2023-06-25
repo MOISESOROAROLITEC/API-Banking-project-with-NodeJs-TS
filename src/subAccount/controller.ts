@@ -30,7 +30,7 @@ export const createSubAccount = async (req: Request, res: Response) => {
 		if (error instanceof PrismaClientKnownRequestError) {
 			if (error.code === 'P2002') {
 				const target: string[] = error.meta!['target'] as string[]
-				return res.status(400).json({ message: `Le compte avec ce ${target[0]} existe déjà` })
+				return res.status(400).json({ message: `Un compte avec ce ${target[0]} existe déjà` })
 			} else if (error.code === 'P2025') {
 				return res.status(400).json(
 					{ message: `Aucun compte parent n'a pour IBAN ${req.body.parentAccountIban}` }
