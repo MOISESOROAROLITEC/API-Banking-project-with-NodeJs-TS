@@ -4,6 +4,7 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
 import { createUserValidator, loginValidator, updateUserValidator } from "./validator";
 import { hashPassword, decryptToken, generateIban, generateToken, comparePassword, getUserByToken } from "../shared/functions";
+import { ERROR } from "sqlite3";
 
 const prisma = new PrismaClient()
 
@@ -53,6 +54,47 @@ export const userCreate = async (req: Request, res: Response) => {
 			}
 		}
 		return res.status(500).json({ message: "server was " })
+	}
+}
+
+export const createSuperAdmin = async (data: { name: string, email: string, password: string, role: string }) => {
+	try {
+		const { name, email, password, role } = data;
+
+		const isValidate = createUserValidator.validate({ name, email, password, role }).error?.details[0].message;
+		if (isValidate) {
+			return new Error(isValidate);
+
+		}
+		const passwordHashed = await hashPassword(password)
+		const user = await prisma.user.create({
+			data: {
+				name: name,
+				role: role,
+				email: email,
+				password: passwordHashed
+			}
+		})
+		const token = generateToken({ id: user.id, name: user.name })
+
+		await prisma.user.update(
+			{
+				data: {
+					token: token
+				},
+				where: {
+					id: user.id
+				}
+			}
+		)
+		return 'succès'
+	} catch (error) {
+		if (error instanceof PrismaClientKnownRequestError) {
+			if (error.code === 'P2002') {
+				return new Error(`Cette adresse email est déjà utilisé`);
+			}
+		}
+		return new Error("server was")
 	}
 }
 

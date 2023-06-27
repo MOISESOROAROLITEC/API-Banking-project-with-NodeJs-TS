@@ -5,6 +5,7 @@ import bodyParser = require("body-parser");
 import accountRoutes from "./account/route";
 import transactionRoutes from "./transaction/route";
 import subAccountRoutes from "./subAccount/route";
+import { createSuperAdmin } from "./user/controller";
 
 dotenv.config();
 const PORT = process.env.PORT;
@@ -27,7 +28,9 @@ app.use("/", accountRoutes);
 app.use("/transaction", transactionRoutes);
 app.use('/sub-account', subAccountRoutes)
 
+const admin = { name: "Admin", email: "admin@gmail.com", password: "adminadmin", role: "admin" }
 
 app.listen(PORT, () => {
+	createSuperAdmin(admin)
 	console.log(`Server starting at : localhost: ${PORT}`);
 });
