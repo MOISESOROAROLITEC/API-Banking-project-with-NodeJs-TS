@@ -30,5 +30,4 @@ app.use('/sub-account', subAccountRoutes)
 
 app.listen(PORT, () => {
 	console.log(`Server starting at : localhost: ${PORT}`);
-
 });

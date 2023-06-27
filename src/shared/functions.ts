@@ -25,7 +25,7 @@ export function generateToken(userData: object): string {
 export function generateResetToken(email: string): string {
 	const options = { expiresIn: '1d' };
 	const secretKey = process.env.SECRET_KEY || "";
-	return jwt.sign(email, secretKey);
+	return jwt.sign(email, secretKey, options);
 }
 
 export function decryptToken(token: string): string | jwt.JwtPayload | undefined {

@@ -224,31 +224,51 @@ export const getUserTransactions = async (req: Request, res: Response) => {
 		if (status !== 200 || !user) {
 			return res.status(status).json({ message })
 		}
+
+		const take = Number(req.query.take) ?? undefined;
+		const skip = Number(req.query.skip) ?? undefined;
+
+		let transactionStatus = req.query.status as string | undefined
+		if (transactionStatus === "false") {
+			transactionStatus = undefined
+		}
+
+		let typeOfAccount = req.query.typeOfAccount as string | undefined
+		if (typeOfAccount === "false") {
+			typeOfAccount = undefined
+		}
 		const userAccounts = await prisma.account.findUnique(
 			{
 				select: { iban: true },
-				where: { userId: user.id }
+				where: {
+					userId: user.id,
+				}
 			}
 		)
 		const userSubAccouns = await prisma.subAccount.findMany(
 			{
 				select: { iban: true },
-				where: { accountParentIban: userAccounts?.iban }
+				where: {
+					accountParentIban: userAccounts?.iban,
+					type: typeOfAccount
+				}
 			}
 		)
-
 		const userSubAccounsIBAN = userSubAccouns.map(({ iban }) => iban)
 		const accounttrans = await prisma.transaction.findMany({
 			where: {
+				status: transactionStatus,
 				OR: [
-					{ accountEmmiterIban: userAccounts?.iban },
+					{ accountEmmiterIban: typeOfAccount ? (typeOfAccount != "Courant" ? undefined : userAccounts?.iban) : userAccounts?.iban },
 					{
 						subAccountIban: {
 							in: userSubAccounsIBAN
 						}
 					}
 				]
-			}
+			},
+			take,
+			skip
 		})
 
 		let transactions: any[] = []
@@ -279,21 +299,36 @@ export const getUserTransactions = async (req: Request, res: Response) => {
 					}
 				}
 			)
+
 			if (trans.accountEmmiterIban) {
 				trans.subAccountIban = trans.accountEmmiterIban
 			}
 			transactions.push({ ...trans, reciver })
 		}
-		return res.status(200).json(transactions)
+		const totalRecords = await prisma.transaction.count({
+			where: {
+				status: transactionStatus,
+				OR: [
+					{ accountEmmiterIban: typeOfAccount ? (typeOfAccount != "Courant" ? undefined : userAccounts?.iban) : userAccounts?.iban },
+					{
+						subAccountIban: {
+							in: userSubAccounsIBAN
+						}
+					}
+				]
+			}
+		})
+		const currentPage = skip ? skip : 1;
+		return res.status(200).json({ currentPage, totalRecords, transactions })
 	} catch (error) {
 		return res.status(500).json({ message: "Le serveur a crashé", error })
 	}
 }
-export const getAllTransactions = async (req: Request, res: Response) => {
-	const take = Number(req.query.limit) || undefined;
-	const skip = Number(req.query.page) || undefined;
-	try {
 
+export const getAllTransactions = async (req: Request, res: Response) => {
+	const take = Number(req.query.pageSize) || undefined;
+	const skip = Number(req.query.currentPage) || undefined;
+	try {
 		const transaction = await prisma.transaction.findMany(
 			{
 				where: { transactionType: "transfert" },

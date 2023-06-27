@@ -167,7 +167,7 @@ export const getUserInformations = async (req: Request, res: Response) => {
 		if (status !== 200 || !user) {
 			return res.status(status).json({ message })
 		}
-		return res.status(200).json({ ...user, password: undefined, id: undefined })
+		return res.status(200).json({ ...user, token: undefined, password: undefined, id: undefined })
 	} catch (error) {
 		if (error instanceof PrismaClientKnownRequestError) {
 			if (error.code === "P2025") {
