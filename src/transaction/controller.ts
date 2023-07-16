@@ -5,10 +5,7 @@ import {
   transferValidator,
   withdrawalValidator,
 } from "./validator";
-import {
-  availableTransactionTypes,
-  tokenDecryptedInterface,
-} from "../common/constantes";
+import { availableTransactionTypes } from "../common/constantes";
 import Joi = require("joi");
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { getUserByToken } from "../shared/functions";
@@ -324,6 +321,9 @@ export const getUserTransactions = async (req: Request, res: Response) => {
       },
       take,
       skip,
+      orderBy: {
+        createAt: "desc",
+      },
     });
 
     let transactions: any[] = [];
@@ -399,19 +399,29 @@ export const getAllTransactions = async (req: Request, res: Response) => {
       req.query.typeOfAccount === "false"
         ? undefined
         : (req.query.typeOfAccount as string);
-
-    const transaction = await prisma.transaction.findMany({
+    const requestOption = {
       where: {
         transactionType: "transfert",
         status: transactionStatus,
       },
+      orderBy: {
+        createAt: "desc",
+      },
       take: take,
       skip,
+    };
+    const transaction = await prisma.transaction.findMany({
+      where: requestOption.where,
+      take: requestOption.take,
+      skip: requestOption.skip,
+      orderBy: { createAt: "asc" },
     });
     if (!transaction) {
       return res.status(200).json({ message: `nothing found`, transaction });
     }
-    const totalRecords: number = await prisma.transaction.count();
+    const totalRecords: number = await prisma.transaction.count({
+      where: requestOption.where,
+    });
     const totalPages: number = take ? Math.ceil(totalRecords / take) : 1;
     const currentPage = skip ? skip : 1;
 
@@ -445,9 +455,12 @@ export const getAllTransactions = async (req: Request, res: Response) => {
       transactions.push({ ...trans, reciver: reciver?.name });
     }
 
-    return res
-      .status(200)
-      .json({ totalRecords, totalPages, currentPage, transactions });
+    return res.status(200).json({
+      totalRecords,
+      totalPages,
+      currentPage,
+      transactions,
+    });
   } catch (error) {
     return res.status(500).json({ message: "server was crashed", error });
   }
